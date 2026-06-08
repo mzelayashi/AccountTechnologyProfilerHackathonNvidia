@@ -1,0 +1,11 @@
+id,category,name,location,title,practice,specialty,region,manager,email,org,link,notes,source
+1,Engineer,Alex Rivera,Austin TX,Sr Solutions Engineer,Security,EDR/MDR | SIEM,TOLA,Jordan Lee,alex.rivera@example.com,Internal,,Sample row,sample
+2,Engineer,Sam Chen,Dallas TX,Solutions Engineer,Security,PAM | Identity,TOLA,Jordan Lee,sam.chen@example.com,Internal,,Sample row,sample
+3,Engineer,Priya Patel,Atlanta GA,Solutions Engineer,Networking,SD-WAN | SASE,Southeast,Morgan Diaz,priya.patel@example.com,Internal,,Sample row,sample
+4,Engineer,Chris Okafor,Denver CO,Sr Solutions Engineer,Data Center,Backup | Virtualization,West,Taylor Kim,chris.okafor@example.com,Internal,,Sample row,sample
+5,Engineer,Dana Brooks,Chicago IL,Solutions Engineer,Security,Application Security | DevSecOps,Central,Morgan Diaz,dana.brooks@example.com,Internal,,Sample row,sample
+6,Vendor,CrowdStrike,,Channel SE,Security,EDR/XDR,National,,partner@example.com,External,https://example.com,Sample vendor contact,sample
+7,Vendor,Palo Alto Networks,,Partner SE,Networking,NGFW | SASE,National,,partner2@example.com,External,https://example.com,Sample vendor contact,sample
+8,Assessment,Security Posture Review,,,Security,Assessment,National,,,Internal,https://example.com,Sample assessment offering,sample
+9,Tool,Network Diagram Builder,,,Tools,Diagramming,National,,,Internal,https://example.com,Sample tool link,sample
+10,Engineer,Jamie Fox,Phoenix AZ,Solutions Engineer,User Edge,UCC | MDM,West,Taylor Kim,jamie.fox@example.com,Internal,,Sample row,sample

@@ -1,0 +1,28 @@
+# Secrets — NEVER commit
+.env
+
+# Local data / caches — runtime-generated, NEVER commit
+data/
+cache/
+vault/
+*.db
+.flowcache/
+.claude/
+*.corrupt-*
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Design-reference images (internal) — never publish
+inspo/
+atlas/inspo/

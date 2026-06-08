@@ -1,0 +1,1350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SHI ATLAS</title>
+<style>
+:root{
+  --bg:#080b11; --panel:#0f1620; --panel2:#0c121b; --line:#1d2735;
+  --text:#e6edf3; --muted:#8b949e; --dim:#5b6675;
+  --cyan:#56d4dd; --blue:#58a6ff; --green:#39d353; --purple:#a371f7; --amber:#f0b429; --red:#f85149;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+  font-family:'Segoe UI',system-ui,Arial,sans-serif;overflow:hidden}
+/* the WebView2 shell suppresses selection by default — re-enable it on all content */
+.result,.log,.mini,.art,.bpanel,.brief,.crumb,.about,.dgreet,.ddate,.h1,input,textarea{
+  -webkit-user-select:text;user-select:text}
+.copybtn{background:#121a24;color:#9fb0c3;border:1px solid var(--line);border-radius:8px;
+  padding:6px 12px;font:inherit;font-size:12px;cursor:pointer;transition:.15s}
+.copybtn:hover{color:#fff;border-color:#2b3a52}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#163049;color:#fff;
+  border:1px solid #1f4d77;border-radius:10px;padding:9px 16px;font-size:13px;z-index:60;
+  box-shadow:0 0 24px -6px #56d4dd;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+a{color:inherit;text-decoration:none}
+.hidden{display:none!important}
+::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:#1d2735;border-radius:6px}
+
+/* ---------- SPLASH ---------- */
+#splash{position:fixed;inset:0;z-index:50;background:#000;display:flex;align-items:center;justify-content:center;transition:opacity .6s ease}
+#splash video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55}
+#splash .veil{position:absolute;inset:0;background:radial-gradient(120% 120% at 50% 40%,transparent 0%,#000a 70%,#000 100%)}
+#splash .panel{position:relative;text-align:center;animation:rise .8s ease both}
+.brand{color:var(--cyan);font-weight:800;letter-spacing:8px;font-size:14px;text-shadow:0 0 18px #56d4dd88}
+.splash-title{font-size:46px;font-weight:800;margin:10px 0 4px;background:linear-gradient(90deg,#e6edf3,#7fd1e0);-webkit-background-clip:text;color:transparent}
+.acro{color:#7fd1e0;font-size:11px;letter-spacing:5px;margin-top:8px;opacity:.85;text-shadow:0 0 12px #56d4dd55}
+#splash-status{color:#9fb0c3;font-size:14px;margin-top:16px;min-height:20px}
+.dots span{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--cyan);margin:0 4px;animation:pulse 1.2s infinite;box-shadow:0 0 10px #56d4dd}
+.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+@keyframes pulse{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid #2b3a52;border-top-color:var(--cyan);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle}
+
+/* ---------- APP ---------- */
+#app{height:100%;display:flex;flex-direction:column}
+.topbar{height:52px;display:flex;align-items:center;gap:18px;padding:0 22px;background:linear-gradient(180deg,#0e151e,#0b1118);border-bottom:1px solid var(--line);position:relative}
+.clock{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#fff;font-size:13.5px;font-weight:600;letter-spacing:.6px;text-shadow:0 0 12px #56d4dd44;white-space:nowrap;pointer-events:none}
+.clock .t{color:#fff;font-variant-numeric:tabular-nums}
+.topbar .logo{color:var(--cyan);font-weight:800;letter-spacing:3px}
+.topbar .sub{color:var(--dim);font-size:12px}
+.nav{margin-left:auto;display:flex;gap:6px}
+.nav button{background:#121a24;color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:7px 14px;font:inherit;font-size:13px;cursor:pointer;transition:.15s}
+.nav button:hover{color:var(--text);border-color:#2b3a52}
+.nav button.alt{color:#fff;background:#163049;border-color:#1f4d77}
+.view{flex:1;overflow:hidden;padding:16px 18px;background:radial-gradient(1200px 600px at 18% -10%,#13233b 0%,#0b0f17 55%,#080b11 100%)}
+
+/* ---------- JARVIS CONSOLE ---------- */
+.console{display:flex;flex-direction:column;height:100%;gap:12px}
+.jobbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-height:28px}
+.jobbar .lbl{color:#6e7681;font-size:11px;text-transform:uppercase;letter-spacing:2px;margin-right:2px}
+.jchip{display:flex;align-items:center;gap:7px;background:#101a26;border:1px solid #20324a;border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;color:#cfe6f0;transition:.14s}
+.jchip:hover{border-color:#2b6fae}
+.jchip.done{opacity:.55;border-color:#20402a;color:#9fd6ad}
+.jchip.err{border-color:#5a2a2a;color:#f8a59f}
+.jchip .ji{font-size:13px}
+.jchip .jx{margin-left:4px;color:#7d8a98;font-size:15px;line-height:1;font-weight:700;padding:0 2px;border-radius:5px;cursor:pointer}
+.jchip .jx:hover{color:#ff6b6b;background:#3a1518}
+.cols{display:grid;grid-template-columns:300px 1fr 320px;gap:14px;flex:1;min-height:0}
+.panel{background:linear-gradient(180deg,#0f1620,#0c1119);border:1px solid #1d2735;border-radius:14px;padding:14px;min-height:0;display:flex;flex-direction:column}
+.panel.center{align-items:center;justify-content:flex-start;text-align:center;padding-top:6px;overflow-y:auto;background:radial-gradient(130% 75% at 50% 22%,#11233b 0%,#0c1119 62%)}
+.brain{display:flex;flex-direction:column;align-items:center;width:100%;max-width:720px}
+.orbwrap{position:relative;display:flex;align-items:center;justify-content:center;padding:4px}
+.orbwrap::before{content:"";position:absolute;width:210px;height:210px;border-radius:50%;
+  background:radial-gradient(circle,#56d4dd33 0%,#56d4dd11 40%,transparent 70%);
+  animation:brainpulse 4s ease-in-out infinite}
+@keyframes brainpulse{0%,100%{transform:scale(.92);opacity:.55}50%{transform:scale(1.08);opacity:.9}}
+.ph{color:#8b949e;font-size:11px;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.ph .rfs{margin-left:auto;color:#56d4dd;cursor:pointer;font-size:11px;letter-spacing:0;text-transform:none}
+.scroll{overflow:auto;display:flex;flex-direction:column;gap:8px;flex:1}
+.daytoggle{display:inline-flex;margin-bottom:10px;border:1px solid #20283a;border-radius:8px;overflow:hidden}
+.daytoggle button{background:#0c121b;color:#8b949e;border:0;padding:5px 12px;font:inherit;font-size:11.5px;cursor:pointer;transition:.15s}
+.daytoggle button.on{background:#163049;color:#fff}
+.mini{display:block;background:#0c121b;border:1px solid #1b2330;border-left:3px solid var(--a,#58a6ff);border-radius:10px;padding:9px 11px;cursor:pointer;transition:.14s}
+.mini:hover{border-color:var(--a,#58a6ff);transform:translateY(-1px)}
+.mini .mt{font-weight:700;font-size:13px;display:flex;align-items:center;gap:7px}
+.mini .ms{color:#8b949e;font-size:11px;margin-top:3px;line-height:1.4;max-height:32px;overflow:hidden}
+.mini .donechip{margin-left:auto;color:#39d353;font-size:10px;border:1px solid #20402a;border-radius:20px;padding:1px 7px;background:#0e2014}
+.mini .badge{margin-left:auto;color:#f85149;font-size:10px;border:1px solid #5a2a2a;border-radius:20px;padding:1px 7px;background:#2a1414}
+.empty{color:#6e7681;font-size:12px;padding:6px 2px}
+.orb{position:relative;width:148px;height:148px;border-radius:50%;object-fit:cover;border:1px solid #2a4a6a;box-shadow:0 0 60px -6px #56d4ddcc,inset 0 0 30px #000;opacity:.98}
+.bwhist{margin-top:8px;background:linear-gradient(180deg,#13243a,#0e1a2b);border:1px solid #2a4a6a;
+  color:#9ecbff;border-radius:20px;padding:7px 16px;font:inherit;font-size:12.5px;cursor:pointer;
+  box-shadow:0 0 18px -8px #56d4dd99;transition:.2s}
+.bwhist:hover{border-color:#56d4dd;box-shadow:0 0 22px -6px #56d4ddcc;color:#cfe8ff}
+.dgreet{font-size:23px;font-weight:800;margin-top:10px}
+.ddate{color:var(--cyan);font-size:13px;margin-top:2px}
+/* home quick-nav (five equal buttons where the scheduled jobs used to be) */
+.homenav{display:flex;flex-wrap:nowrap;justify-content:center;gap:10px;width:100%;margin:0 0 14px}
+.homenav button{flex:1 1 0;min-width:0;white-space:nowrap;background:rgba(255,255,255,.07);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);
+  border:1.5px solid rgba(255,255,255,.55);border-radius:13px;color:#fff;font:inherit;font-size:12.5px;font-weight:700;letter-spacing:.3px;
+  padding:11px 10px;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .12s;
+  box-shadow:0 8px 26px -14px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.25)}
+.homenav button:hover{border-color:#56d4dd;box-shadow:0 0 20px -5px #56d4ddcc;transform:translateY(-1px)}
+.cmdwrap{margin-top:12px;display:flex;align-items:flex-end;gap:8px;width:100%;padding:0 6px}
+.cmd{flex:1;background:linear-gradient(180deg,#0c1622,#0a0f17);border:1px solid #28435f;border-radius:18px;color:#e6edf3;font:inherit;font-size:14px;line-height:1.45;padding:13px 18px;outline:none;resize:vertical;min-height:78px;box-shadow:0 0 26px -10px #56d4dd99,inset 0 1px 0 #ffffff0a;transition:box-shadow .25s,border-color .25s}
+.cmd::placeholder{color:#6e7d8c}
+.cmd:focus{border-color:#56d4dd;box-shadow:0 0 0 2px #56d4dd33,0 0 30px -6px #56d4ddaa}
+.cmdgo{background:#163049;border:1px solid #1f4d77;border-radius:50%;width:46px;height:46px;color:#fff;cursor:pointer;font-size:15px;flex:0 0 auto}
+.cmdgo:hover{box-shadow:0 0 18px -3px var(--blue);background-color:#1c416b}
+.cmdhint{color:#6e7681;font-size:11px;margin-top:10px;min-height:14px}
+.todaycrons{margin:12px 0 0;width:100%;max-width:480px;text-align:left;
+  background:rgba(255,255,255,.07);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);
+  border:1.5px solid rgba(255,255,255,.65);border-radius:16px;padding:11px 14px;
+  box-shadow:0 10px 36px -12px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.25)}
+.todaycrons .tchead{color:#fff;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:1px;
+  margin-bottom:7px;text-align:center;text-shadow:0 0 12px rgba(255,255,255,.35)}
+.todaycrons .tcrow{display:flex;align-items:center;gap:9px;padding:6px 10px;margin-top:6px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.35);border-radius:10px;font-size:11px;font-weight:600;color:#fff}
+/* bottom-pinned stack: suggestions sit directly above the scheduled-jobs strip */
+.bottomstack{margin-top:auto;width:100%;display:flex;flex-direction:column;align-items:center}
+/* Continual Suggestions panel (the proactive next-best-action strip) */
+.suggests{width:100%;max-width:560px;margin:0 0 0;display:none;text-align:left}
+.suggests .sghrow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 7px 4px}
+.suggests .sgh{color:#7fd1e0;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px}
+.suggests .sgthink{color:#c9a8ff;font-weight:400;text-transform:none;letter-spacing:0}
+.suggests .sgbtn{flex:0 0 auto;background:rgba(86,212,221,.1);border:1px solid #2a5a66;border-radius:10px;color:#9fe8f0;font:inherit;font-size:11px;font-weight:700;padding:5px 11px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.suggests .sgbtn:hover{border-color:#56d4dd;box-shadow:0 0 16px -5px #56d4ddcc}
+.suggests .sgempty{color:#6e7d8c;font-size:12px;padding:8px 12px;background:rgba(255,255,255,.02);border:1px dashed #213950;border-radius:12px}
+.suggests .sgrow{display:flex;align-items:center;gap:8px;margin-top:7px;background:linear-gradient(180deg,#10202f,#0c1622);border:1px solid #213950;border-radius:12px;padding:9px 12px;transition:border-color .15s,box-shadow .15s}
+.suggests .sgrow:hover{border-color:#56d4dd;box-shadow:0 0 18px -6px #56d4dd99}
+.suggests .sgmain{flex:1;display:flex;align-items:flex-start;gap:9px;cursor:pointer;color:#dbe7f2;min-width:0}
+.suggests .sgtxt{min-width:0;display:flex;flex-direction:column;gap:1px}
+.suggests .sglabel{font-size:12.5px;font-weight:600;color:#dbe7f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.suggests .sgsub{font-size:10.5px;color:#7d8a98;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.suggests .sgico{color:#56d4dd;font-size:12px;flex:0 0 auto;margin-top:2px}
+.suggests .sgai{flex:0 0 auto;font-size:8.5px;color:#c9a8ff;border:1px solid #5a3a8a;border-radius:8px;padding:1px 6px;text-transform:uppercase;letter-spacing:.5px}
+.suggests .sgx{flex:0 0 auto;color:#6e7d8c;cursor:pointer;font-size:16px;line-height:1;padding:1px 5px;border-radius:6px}
+.suggests .sgx:hover{color:#ff9a9a;background:#2a1414}
+.todaycrons .tctime{color:#fff;font-weight:800;white-space:nowrap;min-width:58px}
+.todaycrons .tcdone{margin-left:auto;color:#7dffb0;font-weight:700;font-size:9.5px;white-space:nowrap}
+/* chat artifact view */
+.chatwrap{display:flex;flex-direction:column;height:100%}
+.chatscroll{flex:1;overflow:auto;margin-top:6px}
+.chatscroll b{color:#56d4dd}
+.chatscroll div{margin:2px 0}
+
+/* ---------- shared content ---------- */
+.h1{font-size:22px;font-weight:800;margin:6px 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.skill{background:linear-gradient(180deg,#0f1620,#0c1119);border:1px solid #1d2735;border-radius:14px;padding:16px;cursor:pointer;transition:.16s;border-top:3px solid var(--a,#58a6ff)}
+.skill:hover{transform:translateY(-3px);box-shadow:0 0 30px -10px var(--a,#58a6ff);border-color:#2b3a52}
+.skill .sname{font-weight:700;font-size:15px}.skill .sicon{font-size:18px;margin-right:8px}
+.skill .sdesc{color:var(--muted);font-size:12px;margin-top:8px;line-height:1.45}
+label{display:block;color:var(--muted);font-size:12px;margin:12px 0 4px}
+input[type=text]{width:100%;background:#0c121b;border:1px solid #202a3a;border-radius:8px;color:var(--text);font:inherit;font-size:14px;padding:11px 12px;outline:none}
+input[type=text]:focus{border-color:var(--cyan);box-shadow:0 0 0 2px #56d4dd22}
+.btn{display:inline-block;margin-top:16px;background:#163049;color:#fff;border:1px solid #1f4d77;border-radius:10px;padding:11px 20px;font:inherit;font-weight:700;cursor:pointer;transition:.15s}
+.btn:hover{box-shadow:0 0 22px -6px var(--blue)}
+.btn.ghost{background:#121a24;color:var(--muted);border-color:var(--line)}
+.btn.purple{background:#2a1d44;border-color:#5a3aa0}
+.log{background:#0a0e15;border:1px solid var(--line);border-radius:10px;padding:14px;font-family:Consolas,monospace;font-size:12.5px;color:#9fb0c3;white-space:pre-wrap;max-height:240px;overflow:auto}
+.result{background:linear-gradient(180deg,#0f1620,#0c1119);border:1px solid #1d2735;border-radius:12px;padding:18px 22px;line-height:1.6}
+.result h1{font-size:20px;color:var(--cyan);border-bottom:1px solid #1d2735;padding-bottom:6px}
+.result h2{font-size:15px;color:var(--blue);margin-top:18px}
+.result h3{font-size:13.5px;color:#9ecbff;margin:14px 0 4px;text-transform:uppercase;letter-spacing:.4px}
+.result li{margin:3px 0}
+.result hr{border:none;border-top:1px solid #20324a;margin:16px 0}
+.result blockquote{border-left:3px solid #2a4a6a;margin:8px 0;padding:2px 0 2px 12px;color:#aab8c7}
+.result code{background:#0b1119;border:1px solid #1d2735;border-radius:5px;padding:1px 5px;font-size:12px;color:#9ecbff}
+.result table.md{border-collapse:collapse;margin:10px 0;font-size:12.5px;width:100%}
+.result table.md th{background:#13202f;color:#9ecbff;text-align:left;padding:7px 10px;border:1px solid #20324a}
+.result table.md td{padding:6px 10px;border:1px solid #1a2636;color:#dbe5ef}
+.crumb{color:var(--dim);font-size:12px;margin-bottom:8px}
+.fade{animation:rise .35s ease both}
+.scrollview{height:100%;overflow:auto}
+/* rich briefing */
+.brief{display:flex;flex-direction:column;gap:14px}
+.bpanel{background:linear-gradient(180deg,#0f1620,#0c1119);border:1px solid #1d2735;border-radius:14px;padding:16px 20px}
+.bpanel h2{margin:0 0 10px;font-size:15px;color:var(--cyan);border-bottom:1px solid #1d2735;padding-bottom:8px}
+.bpanel p{line-height:1.6;margin:0;color:#dbe5ef}
+.bcard{background:#0c121b;border:1px solid #1b2330;border-left:3px solid #2b3a52;border-radius:10px;padding:10px 12px;margin:8px 0}
+.bt{font-weight:700;font-size:14px;color:#e6edf3}
+.bsub{color:#9fb0c3;font-size:12.5px;margin-top:4px;line-height:1.5}
+.bnext{color:var(--cyan);font-size:12px;margin-top:6px}
+.chip{display:inline-block;font-size:11px;border:1px solid #2b3a52;border-radius:20px;padding:1px 8px;color:#8b949e;margin-left:4px}
+.brisk{background:#0c121b;border:1px solid #1b2330;border-left:4px solid #8b949e;border-radius:8px;padding:8px 12px;margin:6px 0;font-size:13px;line-height:1.5}
+.muted{color:#6e7681;font-size:12px}
+.bpanel ul{margin:6px 0 0;padding-left:18px}.bpanel li{margin:5px 0;line-height:1.5}
+.art{display:block;background:linear-gradient(180deg,#0f1620,#0c1119);border:1px solid #1d2735;border-left:4px solid var(--a,#58a6ff);border-radius:12px;padding:12px 16px;margin:8px 0;cursor:pointer;transition:.15s}
+.art:hover{border-color:var(--a,#58a6ff);box-shadow:0 0 22px -8px var(--a,#58a6ff);transform:translateY(-2px)}
+.art .at{font-weight:700;font-size:14px}.art .ad{color:#8b949e;font-size:12px;margin-top:3px}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <video autoplay loop muted playsinline><source src="/loading/LS1.mp4" type="video/mp4"></video>
+  <div class="veil"></div>
+  <div class="panel">
+    <div class="brand">◆ S H I&nbsp;&nbsp;A T L A S</div>
+    <div class="acro">AUTONOMOUS · TACTICAL · LEARNING · AGENT · SYSTEM</div>
+    <div class="splash-title" id="splash-greet">Initializing…</div>
+    <div id="splash-status">booting cognition core</div>
+    <div class="dots" style="margin-top:14px"><span></span><span></span><span></span></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <div class="topbar">
+    <span class="logo">◆ ATLAS</span><span class="sub">powered by your Microsoft 365 Copilot</span>
+    <div class="nav">
+      <button onclick="showHome()">Home</button>
+      <button onclick="showSettings()">Settings</button>
+      <button onclick="showAbout()">About</button>
+    </div>
+  </div>
+  <div id="view" class="view"></div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+let GREET="", DATE="", splashStart=Date.now(), revealed=false;
+let DAY="today", DAYS={yesterday:[],today:[],tomorrow:[]};
+let JOBS=[], ARTS=[], VIEW="home";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const ACTIVE=s=>s==='running'||s==='queued'||s==='waiting';
+
+async function api(name,args){
+  try{const r=await fetch('/api/'+name,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(args||{})});return await r.json();}
+  catch(e){return null;}
+}
+function openDiagram(u){api('open_url',{url:u});}
+function accent(i){return["#58a6ff","#56d4dd","#39d353","#a371f7","#f0b429","#f85149"][i%6];}
+
+/* ---------- clipboard ---------- */
+let TOASTT=null;
+function toast(msg){const t=$('toast');if(!t)return;t.textContent=msg;t.classList.add('show');
+  clearTimeout(TOASTT);TOASTT=setTimeout(()=>t.classList.remove('show'),1600);}
+async function copyText(s){
+  s=s||"";
+  try{await navigator.clipboard.writeText(s);toast("Copied to clipboard");return;}catch(e){}
+  try{const ta=document.createElement('textarea');ta.value=s;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.focus();ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    toast("Copied to clipboard");}catch(e){toast("Copy failed");}}
+function copyBtn(text){return `<button class="copybtn" onclick='copyText(${JSON.stringify(text)})'>⧉ Copy text</button>`;}
+
+/* ---------- boot ---------- */
+async function init(){
+  const g=await api('greeting');
+  if(g){$('splash-greet').textContent=g.greeting;GREET=g.greeting;DATE=g.date;}
+  api('boot');                        // 3 parallel day-gather jobs on their own Chrome instances
+  setTimeout(revealApp,7000);         // reveal the console at 7s, data or not
+  tick();                             // first refresh
+  setInterval(tick,1500);             // keep jobs/days/artifacts live
+  tickClock(); setInterval(tickClock,1000);   // live date + time, top center
+}
+function tickClock(){
+  const el=$('dtime'); if(!el)return;   // live time, shown next to the date under the orb
+  el.textContent=new Date().toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit',second:'2-digit'});
+}
+function revealApp(){
+  if(revealed)return;
+  revealed=true;const sp=$('splash');sp.style.opacity='0';
+  setTimeout(()=>{sp.classList.add('hidden');$('app').classList.remove('hidden');showHome();},600);
+}
+async function tick(){
+  const j=await api('jobs'); if(j)JOBS=j;
+  if(!revealed){const s=$('splash-status');if(s){const a=JOBS.filter(x=>ACTIVE(x.status)).length;s.textContent=a?`Gathering your days… (${a} running)`:'Preparing console…';}return;}
+  const d=await api('days'); if(d){DAYS={yesterday:d.yesterday||[],today:d.today||[],tomorrow:d.tomorrow||[]};GREET=d.greeting||GREET;DATE=d.date||DATE;}
+  const a=await api('artifacts'); if(a)ARTS=a;
+  if(VIEW==='home')refreshConsole();
+}
+
+/* ---------- HOME / JARVIS CONSOLE ---------- */
+let TODAYCRONS=[];
+let SUGG=[], SUGG_DISMISSED=new Set(), SUGG_TS=0, SUGG_ENABLED=true, SUGG_REFRESHING=false;
+async function showHome(){
+  VIEW='home';
+  api('todays_crons').then(c=>{TODAYCRONS=c||[];if(VIEW==='home')renderTodayCrons();});
+  $('view').innerHTML=`<div class="console fade">
+    <div id="jobbar" class="jobbar"></div>
+    <div class="cols">
+      <section class="panel">
+        <div class="ph">🗓 Calendar <span class="rfs" onclick="refreshDay()" title="Re-gather this day from Copilot">↻ refresh</span></div>
+        <div class="daytoggle" id="daytoggle">
+          <button data-d="yesterday" onclick="setDay('yesterday')">Yesterday</button>
+          <button data-d="today" onclick="setDay('today')">Today</button>
+          <button data-d="tomorrow" onclick="setDay('tomorrow')">Tomorrow</button>
+        </div>
+        <div id="leftlist" class="scroll"></div>
+      </section>
+      <section class="panel center">
+        <div class="brain">
+          <div class="homenav">
+            <button onclick="showCustomers()">Customer Vault</button>
+            <button onclick="showPeople()">People Resources</button>
+            <button onclick="showCrons()">Cron Jobs</button>
+            <button onclick="showSkills()">Skills</button>
+            <button onclick="showArtifacts()">Artifacts</button>
+          </div>
+          <div class="orbwrap">
+            <video class="orb" autoplay loop muted playsinline><source src="/loading/LS1.mp4" type="video/mp4"></video>
+          </div>
+          <button class="bwhist" onclick="showBrainwaves()">🧠 Brainwave History</button>
+          <div class="dgreet">${esc(GREET)}</div>
+          <div class="ddate">${esc(DATE)} · <span id="dtime"></span></div>
+          <div class="cmdwrap">
+            <textarea id="cmd" class="cmd" rows="3" placeholder="Ask ATLAS to do anything…"
+                      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendCmd();}"></textarea>
+            <button class="cmdgo" onclick="sendCmd()">▶</button>
+          </div>
+          <div id="cmdhint" class="cmdhint">Try: “is Verkada a good fit for AWC?”, “battlecard for ProPetro”, “trip report from yesterday’s sync”.  ·  Shift+Enter for a new line.</div>
+        </div>
+        <div class="bottomstack">
+          <div id="suggestions" class="suggests"></div>
+          <div id="todaycrons" class="todaycrons"></div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="ph">🗂 Recent Artifacts <span class="rfs" onclick="showArtifacts()">open all →</span></div>
+        <div id="rightlist" class="scroll"></div>
+      </section>
+    </div>
+  </div>`;
+  refreshConsole();
+  tickClock();
+}
+
+function refreshConsole(){
+  if(VIEW!=='home')return;
+  // top job bar
+  const jb=$('jobbar'); if(jb){
+    const act=JOBS.filter(j=>ACTIVE(j.status));
+    const done=JOBS.filter(j=>!ACTIVE(j.status)).slice(0,4);
+    let h=`<span class="lbl">Working on</span>`;
+    if(!act.length)h+=`<span class="empty" style="padding:0">idle — nothing running</span>`;
+    act.forEach(j=>{h+=`<div class="jchip run" onclick="showJob('${j.id}')"><span class="spinner"></span><span class="ji">${j.icon||'•'}</span>${esc(j.title)}<span class="jx" title="Stop &amp; close its Chrome" onclick="event.stopPropagation();cancelJob('${j.id}')">×</span></div>`;});
+    done.forEach(j=>{const cls=j.status==='error'?'err':'done';h+=`<div class="jchip ${cls}" onclick="showJob('${j.id}')"><span class="ji">${j.status==='error'?'⚠':'✓'}</span>${esc(j.title)}</div>`;});
+    jb.innerHTML=h;
+  }
+  // day toggle active
+  document.querySelectorAll('#daytoggle button').forEach(b=>b.classList.toggle('on',b.dataset.d===DAY));
+  // left meetings
+  const ll=$('leftlist'); if(ll)ll.innerHTML=renderMeetings();
+  // right artifacts
+  const rl=$('rightlist'); if(rl)rl.innerHTML=renderArtifactsMini();
+  renderTodayCrons();
+  pollSuggestions();
+}
+
+/* ---------- Continual Suggestions (proactive next-best-action panel) ---------- */
+async function pollSuggestions(){
+  if(VIEW!=='home'){return;}
+  const now=Date.now();
+  // refetch at most every ~20s — but poll every tick while a suggestion run is in flight
+  if(!SUGG_REFRESHING && now-SUGG_TS < 20000){renderSuggestions();return;}
+  SUGG_TS=now;
+  const r=await api('suggestions')||{};
+  SUGG_ENABLED=r.enabled!==false;
+  SUGG=r.items||[];
+  SUGG_REFRESHING=!!r.refreshing;
+  renderSuggestions();
+}
+function renderSuggestions(){
+  const el=$('suggestions'); if(!el)return;
+  if(!SUGG_ENABLED){el.style.display='none';el.innerHTML='';return;}
+  el.style.display='block';   // NB: '' would revert to the base .suggests{display:none} rule
+  const items=SUGG.filter(x=>x&&x.id&&!SUGG_DISMISSED.has(x.id));
+  let h=`<div class="sghrow"><span class="sgh">Suggested next steps${SUGG_REFRESHING?' <span class="sgthink">· thinking…</span>':''}</span>`
+       +`<button class="sgbtn" onclick="requestSuggestions()">✨ Suggest now</button></div>`;
+  if(items.length){
+    items.forEach(it=>{
+      const tip=esc(it.command).replaceAll('"','&quot;');
+      const sub=it.source==='ai'?`<div class="sgsub">${esc(it.command)}</div>`:'';
+      h+=`<div class="sgrow">
+      <div class="sgmain" title="${tip}" onclick='suggestionRun(${JSON.stringify(it.command)})'><span class="sgico">▷</span><div class="sgtxt"><div class="sglabel">${esc(it.label)}${it.source==='ai'?' <span class="sgai">AI</span>':''}</div>${sub}</div></div>
+      <span class="sgx" title="Dismiss" onclick='dismissSuggestion(${JSON.stringify(it.id)})'>×</span></div>`;});
+  }else if(!SUGG_REFRESHING){
+    h+=`<div class="sgempty">No suggestions right now — tap <b>Suggest now</b> for ideas.</div>`;
+  }
+  el.innerHTML=h;
+}
+function dismissSuggestion(id){SUGG_DISMISSED.add(id);renderSuggestions();}
+function suggestionRun(cmd){const el=$('cmd');if(el)el.value=cmd;sendCmd();}
+async function requestSuggestions(){
+  SUGG_REFRESHING=true; renderSuggestions();
+  const r=await api('request_suggestions')||{};
+  if(r&&r.ok===false){SUGG_REFRESHING=false;renderSuggestions();toast(r.error||'Suggestions are off');return;}
+  SUGG_TS=0;   // force the next poll to refetch; fast-polling continues while refreshing
+  toast('💡 Thinking up suggestions…');
+}
+async function refreshDay(){
+  const lbl={yesterday:'yesterday',today:'today',tomorrow:'tomorrow'}[DAY]||'this day';
+  await api('refresh_day',{kind:DAY});
+  toast('↻ Re-gathering '+lbl+'… the calendar updates when it finishes.');
+}
+async function cancelJob(id){
+  toast('⏹ Stopping the task and closing its Chrome…');
+  await api('cancel_job',{id});
+  await tick();   // refresh job list so the chip drops
+}
+function renderTodayCrons(){
+  const el=$('todaycrons'); if(!el)return;
+  if(!TODAYCRONS.length){el.innerHTML='';el.style.display='none';return;}
+  el.style.display='';
+  let h=`<div class="tchead">Today's Scheduled Jobs</div>`;
+  TODAYCRONS.forEach(c=>{h+=`<div class="tcrow"><span class="tctime">${esc(c.time)}</span><span style="overflow:hidden;text-overflow:ellipsis">${esc(c.instruction)}</span>${c.fired?'<span class="tcdone">✓ done</span>':''}</div>`;});
+  el.innerHTML=h;
+}
+
+function dayGathering(){
+  const lbl={yesterday:'Yesterday',today:'Today',tomorrow:'Tomorrow'}[DAY];
+  return JOBS.some(j=>j.kind==='gather_day'&&ACTIVE(j.status)&&(j.title||'').includes(lbl));
+}
+function renderMeetings(){
+  const list=DAYS[DAY]||[];
+  const real=list.filter(m=>m.time);
+  if(!real.length){
+    if(dayGathering())return `<div class="empty"><span class="spinner"></span> Gathering ${DAY}…</div>`;
+    const note=(list[0]&&list[0].body)?list[0].body.slice(0,160):'No meetings.';
+    return `<div class="empty">No meetings ${DAY}.<div style="margin-top:6px;color:#7d8795">${esc(note)}</div></div>`;
+  }
+  return real.map(m=>`<div class="mini" style="--a:${m.accent}" onclick="showMeeting(${m.i})">
+    <div class="mt"><span>${m.icon}</span>${esc(m.time)} · ${esc(m.title)}
+      ${m.past?'<span class="donechip">✓ done</span>':(m.conflict?'<span class="badge">⚠</span>':'')}</div>
+    <div class="ms">${esc(m.preview||m.org)}</div></div>`).join("");
+}
+function renderArtifactsMini(){
+  if(!ARTS.length)return `<div class="empty">No artifacts yet — run a skill or a command and its output lands here.</div>`;
+  return ARTS.slice(0,12).map((a,idx)=>`<div class="mini" style="--a:${accent(idx)}" onclick='openArtifact(${JSON.stringify(a.id)})'>
+    <div class="mt"><span>${a.icon}</span>${esc(a.skill_name)}${a.customer?' <span class="chip">'+esc(a.customer)+'</span>':''}</div>
+    <div class="ms">${esc(a.title)} · ${fmtDate(a.ts)}</div></div>`).join("");
+}
+
+/* ---------- command box ---------- */
+async function sendCmd(){
+  const el=$('cmd'); if(!el)return; const text=el.value.trim(); if(!text)return;
+  el.value='';
+  const hint=$('cmdhint');
+  if(hint)hint.textContent='🧠 ATLAS is thinking…';
+  const res=await api('command',{text});
+  await tick();
+  if(res&&res.ids&&res.ids.length)showJob(res.ids[0]);   // watch the brain reason + route
+  else if(hint)hint.textContent='Sent.';
+}
+function setDay(d){DAY=d;refreshConsole();}
+
+/* ---------- job detail ---------- */
+async function showJob(id){
+  VIEW='job';
+  while(VIEW==='job'){
+    const j=await api('job',{id}); if(!j){await sleep(700);continue;}
+    renderJob(j);
+    if(!ACTIVE(j.status)){
+      const child=j.result&&j.result.child;       // brain routed to real work → follow to it
+      if(child){await sleep(700); if(VIEW==='job')return showJob(child);}
+      return;
+    }
+    await sleep(1000);
+  }
+}
+function renderJob(j){
+  let body='';
+  if(j.result&&j.result.data&&j.result.data.executive_summary)body=renderBriefing(j.result.data);
+  else if(j.result&&j.result.text)body=`<div class="result">${mdBody(j.result.text)}</div>`;
+  else body=`<div class="log">${esc(j.log||'(starting…)')}</div>`;
+  let btns='';
+  const r=j.result||{};
+  if(!ACTIVE(j.status)&&r.text)btns+=copyBtn(r.text)+' ';
+  if(r.url)btns+=`<button class="btn ghost" onclick='openDiagram(${JSON.stringify(r.url)})'>↗ Continue this chat</button> `;
+  if(r.diagram)btns+=`<button class="btn purple" onclick='openDiagram(${JSON.stringify(r.diagram)})'>🗺 Open diagram</button> `;
+  (r.files||[]).forEach(f=>{btns+=`<button class="btn ghost" onclick='openDiagram(${JSON.stringify(f.uri)})'>📄 ${esc(f.name)}</button> `;});
+  const stat=ACTIVE(j.status)?`<span class="spinner"></span> ${esc(j.status)} on instance #${j.session==null?'?':j.session}`:esc(j.status);
+  $('view').innerHTML=`<div class="scrollview fade"><div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick="showHome()">← Home</a></div>
+    <div class="h1">${j.icon||'•'} ${esc(j.title)}</div>
+    <div class="crumb">${stat}</div>
+    ${ACTIVE(j.status)?`<div class="log" style="margin-bottom:12px">${esc(j.log||'(working…)')}</div>`:''}
+    ${body}<div style="margin-top:14px">${btns}</div></div>`;
+}
+
+/* ---------- meeting detail ---------- */
+function showMeeting(i){
+  const m=(DAYS[DAY]||[]).find(x=>x.i===i); if(!m)return;
+  VIEW='meeting';
+  const label=m.past?'Recap of what was discussed':'Prep for this meeting';
+  const tr=m.past?`<button class="btn purple" onclick='createTripReport(${JSON.stringify(m.title)},${JSON.stringify(DAY)})'>📝 Create Trip Report</button>`:"";
+  $('view').innerHTML=`<div class="scrollview fade"><div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick="showHome()">← ${DAY[0].toUpperCase()+DAY.slice(1)}</a></div>
+    <h1 class="h1" style="color:${m.accent}">${m.icon} ${esc(m.title)}</h1>
+    <div class="crumb">${m.past?'✓ ':''}${label}${m.time?' · '+esc(m.time):''}</div>
+    <div class="result">${mdBody(m.body)}</div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">${copyBtn(m.body||"")} ${tr}</div></div>`;
+}
+function dayIso(day){const d=new Date();d.setDate(d.getDate()+({yesterday:-1,tomorrow:1}[day]||0));
+  const z=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate());}
+async function createTripReport(title,day){
+  const res=await api('run_skill',{key:'trip_report',ctx:{meeting:title,date:dayIso(day||DAY)}});
+  if(res&&res.id)showJob(res.id);
+}
+
+/* ---------- SKILLS ---------- */
+async function showSkills(){
+  VIEW='skills';
+  const sk=await api('skills')||[];
+  let html=`<div class="scrollview fade"><div class="h1">Skills</div><div class="grid">`;
+  sk.forEach((s,idx)=>{
+    // People Resources opens its browsable/editable directory view, not a one-shot skill form.
+    const click=s.key==='find_resource'?'showPeople()':`openSkill(${JSON.stringify(s)})`;
+    html+=`<div class="skill" style="--a:${accent(idx)}" onclick='${click}'>
+      <div class="sname"><span class="sicon">${s.icon}</span>${esc(s.name)}</div>
+      <div class="sdesc">${esc(s.description)}</div></div>`;});
+  $('view').innerHTML=html+`</div></div>`;
+}
+function openSkill(s){
+  VIEW='skill';
+  let f="";(s.inputs||[]).forEach(inp=>{f+=`<label>${esc(inp.label)}</label><input type="text" id="in_${inp.key}" placeholder="${esc(inp.placeholder)}">`;});
+  $('view').innerHTML=`<div class="scrollview fade"><div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick="showSkills()">← Skills</a></div>
+    <div class="h1">${s.icon} ${esc(s.name)}</div>
+    <div style="color:#8b949e;margin-bottom:6px">${esc(s.description)}</div>${f}
+    <button class="btn" onclick='runSkill(${JSON.stringify(s)})'>Run ${esc(s.name)}</button></div>`;
+}
+async function runSkill(s){
+  const ctx={};(s.inputs||[]).forEach(inp=>{const el=$('in_'+inp.key);ctx[inp.key]=el?el.value.trim():"";});
+  const res=await api('run_skill',{key:s.key,ctx:ctx});
+  if(res&&res.id)showJob(res.id);
+}
+
+/* ---------- rich briefing ---------- */
+function renderBriefing(d){
+  const sev=s=>({high:'#f85149',medium:'#f0b429',low:'#39d353'}[(s||'').toLowerCase()]||'#8b949e');
+  let h='<div class="brief">';
+  if(d.executive_summary)h+=`<section class="bpanel"><h2>📋 Executive Summary</h2><p>${esc(d.executive_summary)}</p></section>`;
+  const ini=d.current_initiatives||[];
+  if(ini.length){h+='<section class="bpanel"><h2>🚀 Current Initiatives</h2>';ini.forEach(i=>{h+=`<div class="bcard"><div class="bt">${esc(i.project||'')}<span class="chip">${esc(i.status||'')}</span></div><div class="bsub">${esc(i.details||'')}</div>${i.next_milestone?`<div class="bnext">↳ ${esc(i.next_milestone)}</div>`:''}</div>`;});h+='</section>';}
+  const op=d.strategic_opportunities||[];
+  const winp=v=>{if(v==null||v==='')return '';const n=Number(v);return (isFinite(n)&&n>0&&n<=1)?Math.round(n*100)+'%':esc(v);};
+  if(op.length){h+='<section class="bpanel"><h2>🎯 Strategic Opportunities</h2>';op.forEach(o=>{const wp=winp(o.win_probability);h+=`<div class="bcard"><div class="bt">${esc(o.opportunity||'')}<span class="chip" style="border-color:${sev(o.priority)};color:${sev(o.priority)}">${esc(o.priority||'')}</span>${wp?`<span class="chip">win ${wp}</span>`:''}</div><div class="bsub">${esc(o.recommended_approach||'')}</div>${o.next_step?`<div class="bnext">↳ ${esc(o.next_step)}</div>`:''}</div>`;});h+='</section>';}
+  const st=d.immediate_next_steps||[];
+  if(st.length){h+='<section class="bpanel"><h2>✅ Immediate Next Steps</h2><ul>';st.forEach(s=>{h+=`<li>${esc(s.action||'')} <span class="muted">— ${esc(s.owner||'')} · ${esc(s.timing||'')}</span></li>`;});h+='</ul></section>';}
+  const rk=d.risks_to_monitor||[];
+  if(rk.length){h+='<section class="bpanel"><h2>⚠️ Risks to Monitor</h2>';rk.forEach(r=>{h+=`<div class="brisk" style="border-left-color:${sev(r.severity)}"><b style="color:${sev(r.severity)}">[${esc(r.severity||'')}]</b> ${esc(r.risk||'')}<div class="bsub">mitigation: ${esc(r.mitigation||'')}</div></div>`;});h+='</section>';}
+  const tp=d.talking_points||[];
+  if(tp.length){h+='<section class="bpanel"><h2>💬 Talking Points</h2><ul>';tp.forEach(t=>{h+=`<li><b>${esc(t.topic||'')}:</b> ${esc(t.point||'')}</li>`;});h+='</ul></section>';}
+  return h+'</div>';
+}
+
+/* ---------- artifacts ---------- */
+function fmtDate(ts){try{return new Date(ts).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});}catch(e){return ts;}}
+let ARTSEARCH='', ARTUNFILED=false;
+async function showArtifacts(){
+  VIEW='artifacts';
+  $('view').innerHTML=`<div class="scrollview fade"><div class="h1">🗂 Artifacts</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;max-width:680px;flex-wrap:wrap">
+      <input type="text" id="artsearch" class="cmd" style="flex:1;min-width:280px" placeholder="🔎 Search artifacts &amp; trip reports (by title, customer, or content)…"
+        oninput="filterArtifacts()" onkeydown="if(event.key==='Escape'){this.value='';filterArtifacts();}">
+      <button id="artunf" class="btn ghost" onclick="toggleUnfiled()" title="Show only artifacts not yet filed to a customer">📥 Unfiled only</button>
+      <span id="artcount" class="muted" style="font-size:12px;white-space:nowrap"></span></div>
+    <div id="artlist"></div></div>`;
+  const sb=$('artsearch'); if(sb){sb.value=ARTSEARCH;sb.focus();}
+  await loadArtifacts();
+}
+async function loadArtifacts(){
+  const q=ARTSEARCH.trim();
+  ARTS=(q?await api('search_artifacts',{q}):await api('artifacts'))||[];
+  if(ARTUNFILED)ARTS=ARTS.filter(a=>!(a.customer&&a.customer.trim()));
+  const ub=$('artunf'); if(ub){ub.classList.toggle('purple',ARTUNFILED);ub.classList.toggle('ghost',!ARTUNFILED);}
+  const cnt=$('artcount'); if(cnt)cnt.textContent=(ARTUNFILED?`${ARTS.length} unfiled`:(q?`${ARTS.length} match${ARTS.length===1?'':'es'}`:`${ARTS.length} total`));
+  const g=$('artlist'); if(!g)return;
+  if(!ARTS.length){g.innerHTML=`<div class="empty">${ARTUNFILED?'🎉 Nothing unfiled — everything is filed to a customer.':(q?'No artifacts match “'+esc(ARTSEARCH)+'”.':'No artifacts yet — run a skill or a command and its output will be saved here.')}</div>`;return;}
+  let h='';
+  ARTS.forEach((a,idx)=>{const extras=[];if(a.has_diagram)extras.push('🗺 diagram');if(a.has_files)extras.push('📄 file');
+    h+=`<div class="art" style="--a:${accent(idx)};position:relative" onclick='openArtifact(${JSON.stringify(a.id)})'>
+      <button class="copybtn" style="position:absolute;top:10px;right:10px;padding:3px 9px" title="Delete"
+        onclick='event.stopPropagation();deleteArtifactPrompt(${JSON.stringify(a.id)},${JSON.stringify((a.skill_name||"")+" — "+(a.title||""))})'>🗑</button>
+      <div class="at">${a.icon} ${esc(a.skill_name)} — ${esc(a.title)}${a.customer?' <span class="chip">'+esc(a.customer)+'</span>':''}</div>
+      <div class="ad">${fmtDate(a.ts)}${extras.length?'  ·  '+extras.join('  ·  '):''}${a.preview?'<div style="color:#7d8795;margin-top:4px;font-size:12px">'+esc(a.preview)+'…</div>':''}</div></div>`;});
+  g.innerHTML=h;
+}
+function filterArtifacts(){const sb=$('artsearch');ARTSEARCH=sb?sb.value:'';loadArtifacts();}
+function toggleUnfiled(){ARTUNFILED=!ARTUNFILED;loadArtifacts();}
+/* ---------- Brainwave History (agentic multi-agent outputs live here, not in Artifacts) ---------- */
+async function showBrainwaves(){
+  VIEW='brainwaves';
+  const bw=await api('brainwaves')||[];
+  let h=`<div class="scrollview fade"><div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick="showHome()">← Home</a></div>
+    <div class="h1">🧠 Brainwave History</div>
+    <div class="muted" style="margin:-4px 0 14px;font-size:12px">Every brainwave the ATLAS brain ran — multi-agent research + analysis. Click to read; 🗑 to remove.</div>`;
+  if(!bw.length)h+=`<div class="empty">No brainwaves yet. Ask the brain something like “is Verkada a good fit for ProPetro?”.</div>`;
+  bw.forEach((a,idx)=>{h+=`<div class="art" style="--a:${accent(idx)};position:relative" onclick='openArtifact(${JSON.stringify(a.id)})'>
+    <button class="copybtn" style="position:absolute;top:10px;right:10px;padding:3px 9px" title="Delete"
+      onclick='event.stopPropagation();deleteArtifactPrompt(${JSON.stringify(a.id)},${JSON.stringify("Brainwave — "+(a.title||""))})'>🗑</button>
+    <div class="at">🧠 ${esc(a.title)}${a.customer?' <span class="chip">'+esc(a.customer)+'</span>':''}</div>
+    <div class="ad">${fmtDate(a.ts)}${a.has_files?'  ·  📄 wave.md':''}${a.preview?'<div style="color:#7d8795;margin-top:4px;font-size:12px">'+esc(a.preview)+'…</div>':''}</div></div>`;});
+  $('view').innerHTML=h+`</div>`;
+}
+async function openArtifact(id){
+  const a=await api('artifact',{id}); if(!a){toast('Artifact not found');return;}
+  if(a.skill==='ask')return showChat(a);   // chats get the live conversational view
+  VIEW='artifact';
+  const isBw=a.skill==='brainwave';
+  const body=(a.data&&a.data.executive_summary)?renderBriefing(a.data):`<div class="result">${mdBody(a.text)}</div>`;
+  let btns=copyBtn(a.text||"")+' ';
+  if(!isBw)btns+=`<button class="btn ghost" onclick='assignPrompt(${JSON.stringify(a.id)})'>📁 File to customer</button> `;  // brainwaves are multifaceted — not filed
+  if(a.skill==='trip_report')btns+=`<button class="btn" onclick='emailArtifact(${JSON.stringify(a.id)})'>✉️ Email via Outlook</button> `;
+  if(a.diagram)btns+=`<button class="btn purple" onclick='openDiagram(${JSON.stringify(a.diagram)})'>🗺 Open diagram</button> `;
+  (a.files||[]).forEach(f=>{btns+=`<button class="btn ghost" onclick='openDiagram(${JSON.stringify(f.uri)})'>📄 ${esc(f.name)}</button> `;});
+  btns+=`<button class="btn ghost" style="border-color:#5b2333;color:#ff9a9a" onclick='deleteArtifactPrompt(${JSON.stringify(a.id)},${JSON.stringify((isBw?"Brainwave — ":(a.skill_name||"")+" — ")+(a.title||""))})'>🗑 Delete</button> `;
+  const back=isBw?`<a style="cursor:pointer;color:#56d4dd" onclick="showBrainwaves()">← Brainwave History</a>`
+            :a.customer?`<a style="cursor:pointer;color:#56d4dd" onclick='showCustomer(${JSON.stringify(a.customer)})'>← ${esc(a.customer)}</a>`
+                       :`<a style="cursor:pointer;color:#56d4dd" onclick="showArtifacts()">← Artifacts</a>`;
+  $('view').innerHTML=`<div class="scrollview fade"><div class="crumb">${back}</div>
+    <div class="h1">${a.icon} ${esc(a.skill_name)} — ${esc(a.title)}</div>
+    <div class="crumb">${fmtDate(a.ts)}${a.customer?' · filed to '+esc(a.customer):''}</div>
+    ${body}<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">${btns}</div></div>`;
+}
+async function emailArtifact(id){
+  toast('Opening Outlook draft…');
+  const r=await api('email_artifact',{id});
+  if(!r||!r.ok)toast('Could not open Outlook'+(r&&r.error?': '+r.error.slice(0,40):''));
+  else if(r.via==='mailto')toast('Opened your mail app (no Outlook COM)');
+  else toast('Outlook draft opened');
+}
+
+/* ---------- live chat (resume a Copilot conversation) ---------- */
+let CHATID=null;
+function showChat(a){
+  VIEW='chat'; CHATID=a.id;
+  $('view').innerHTML=`<div class="chatwrap fade">
+    <div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick="showArtifacts()">← Artifacts</a></div>
+    <div class="h1">${a.icon} ${esc(a.title)}</div>
+    <div class="crumb">${fmtDate(a.ts)} &nbsp; ${copyBtn(a.text||"")}</div>
+    <div id="chatscroll" class="result chatscroll">${mdBody(a.text)}</div>
+    <div class="cmdwrap" style="margin-top:12px">
+      <input id="chatin" class="cmd" placeholder="Continue this conversation — it keeps the prior context…"
+             onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="cmdgo" onclick="sendChat()">▶</button>
+    </div>
+    <div id="chathint" class="cmdhint"></div></div>`;
+  const sc=$('chatscroll'); if(sc)sc.scrollTop=sc.scrollHeight;
+  const ci=$('chatin'); if(ci)ci.focus();
+}
+async function sendChat(){
+  const el=$('chatin'); if(!el)return; const text=el.value.trim(); if(!text||!CHATID)return;
+  el.value=''; el.disabled=true;
+  const hint=$('chathint'); if(hint)hint.innerHTML='<span class="spinner"></span> Resuming the conversation on its own Chrome instance…';
+  const sc=$('chatscroll'); if(sc){sc.innerHTML+=mdBody('\n**You:** '+text);sc.scrollTop=sc.scrollHeight;}
+  const res=await api('continue_chat',{id:CHATID,text});
+  if(!res||!res.job_id){if(hint)hint.textContent='Could not continue: '+((res&&res.error)||'unknown');el.disabled=false;return;}
+  while(VIEW==='chat'){
+    const j=await api('job',{id:res.job_id}); if(!j){await sleep(800);continue;}
+    if(!ACTIVE(j.status))break;
+    await sleep(1000);
+  }
+  const fresh=await api('artifact',{id:CHATID});
+  if(fresh){const i=ARTS.findIndex(x=>x.id===CHATID);if(i>=0)ARTS[i]=fresh;
+    if(VIEW==='chat')showChat(fresh);}
+  else{el.disabled=false;if(hint)hint.textContent='';}
+}
+
+/* ---------- ABOUT ---------- */
+function showAbout(){
+  VIEW='about';
+  const acro=[["Autonomous","Runs your day end-to-end — gathers, recaps, drafts — without babysitting."],
+    ["Tactical","Built for the field: meeting prep, trip reports, BANTC, account intel."],
+    ["Learning","Every gather and skill output is saved to your vault and Artifacts."],
+    ["Agent","Each request is its own agent on its own Chrome instance, running in parallel."],
+    ["System","One operating surface for your customer-facing work."]];
+  let h=`<div class="scrollview fade"><div class="h1" style="text-align:center">◆ A.T.L.A.S.</div>
+    <div style="max-width:760px;margin:0 auto;line-height:1.6">
+    <p style="color:#9fb0c3">ATLAS is your tactical operating system for customer engagements — powered entirely by
+    <b style="color:#56d4dd">your Microsoft 365 Copilot</b>, driven through the browser. Every request runs as its
+    own background job on its own Chrome instance, so work keeps going no matter where you navigate, and results
+    always land in Artifacts.</p>`;
+  acro.forEach(a=>{h+=`<div class="bcard" style="border-left-color:#56d4dd"><div class="bt" style="color:#56d4dd">${a[0]}</div><div class="bsub">${esc(a[1])}</div></div>`;});
+  h+=`<p class="muted" style="margin-top:14px">AUTONOMOUS · TACTICAL · LEARNING · AGENT · SYSTEM</p>
+    <p style="margin-top:10px;color:#9fb0c3">📖 To view the user manual,
+    <a onclick="openManual()" style="color:#56d4dd;cursor:pointer;text-decoration:underline">click here</a>.</p></div></div>`;
+  $('view').innerHTML=h;
+}
+
+/* ---------- SETTINGS ---------- */
+async function showSettings(){
+  VIEW='settings';
+  const s=await api('get_settings')||{};
+  $('view').innerHTML=`<div class="scrollview fade"><div class="h1">⚙ Settings</div>
+    <div style="max-width:640px">
+    <div style="color:#8b949e;font-size:13px;margin-bottom:10px">Configure how ATLAS hands off your work. These persist in your vault.</div>
+    <label>Trip report email recipients</label>
+    <input type="text" id="set_to" placeholder="name@company.com, name2@company.com">
+    <label>Email signature (added under the report)</label>
+    <input type="text" id="set_sig" placeholder="Manuel Zelaya · Solutions Architect · SHI">
+    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer">
+      <input type="checkbox" id="set_auto" style="width:auto"> Auto-open an Outlook draft when a trip report finishes</label>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer">
+      <input type="checkbox" id="set_showchrome" style="width:auto"> Show the Copilot Chrome windows on-screen <span class="muted" style="font-weight:400">— debug. Off = they run hidden &amp; minimized. Applies to windows opened after you save.</span></label>
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid #1d2735">
+      <label>🌍 Timezone <span class="muted" style="font-weight:400">— when Cron Jobs fire</span></label>
+      <select id="set_tz" style="width:100%;max-width:340px;background:#0c121b;border:1px solid #202a3a;border-radius:8px;color:#e6edf3;font:inherit;font-size:14px;padding:11px 12px;margin-top:4px">
+        <option value="America/New_York">Eastern · New York</option>
+        <option value="America/Chicago">Central · Chicago</option>
+        <option value="America/Denver">Mountain · Denver</option>
+        <option value="America/Phoenix">Mountain (no DST) · Phoenix</option>
+        <option value="America/Los_Angeles">Pacific · Los Angeles</option>
+        <option value="America/Anchorage">Alaska · Anchorage</option>
+        <option value="Pacific/Honolulu">Hawaii · Honolulu</option>
+        <option value="UTC">UTC</option>
+        <option value="Europe/London">London</option>
+        <option value="Europe/Berlin">Central Europe · Berlin</option>
+        <option value="Asia/Kolkata">India · Kolkata</option>
+        <option value="Asia/Tokyo">Japan · Tokyo</option>
+      </select></div>
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid #1d2735">
+      <label>🔒 System PIN (6 digits)</label>
+      <div style="color:#8b949e;font-size:12px;margin:2px 0 6px">Required to delete a customer. Leave blank to disable deletion entirely.</div>
+      <input type="password" id="set_pin" inputmode="numeric" maxlength="6" autocomplete="off"
+             placeholder="••••••" style="max-width:160px;letter-spacing:4px"
+             oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid #1d2735">
+      <label>💡 Continual Advice <span class="muted" style="font-weight:400">— proactive suggestions on Home</span></label>
+      <div style="color:#8b949e;font-size:12px;margin:2px 0 8px">ATLAS quietly suggests your next best action based on your upcoming meeting and the customer involved. It only suggests — nothing runs until you tap it.</div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="set_sugg" style="width:auto"> Show Continual Suggestions on the Home screen</label>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer"><input type="checkbox" id="set_suggai" style="width:auto"> Include strategic (AI) suggestions <span class="muted" style="font-weight:400">— uses Copilot; off = instant tips only</span></label>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer"><input type="checkbox" id="set_suggwh" style="width:auto"> Only generate strategic suggestions during work hours (7am–7pm)</label>
+      <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:12px">
+        <div><label style="font-size:12px">Refresh frequency</label><br>
+          <select id="set_suggfreq" style="background:#0c121b;border:1px solid #202a3a;border-radius:8px;color:#e6edf3;font:inherit;font-size:13px;padding:8px 10px;margin-top:3px">
+            <option value="30">Every 30 minutes</option><option value="60">Every hour</option>
+            <option value="120">Every 2 hours</option><option value="240">Every 4 hours</option></select></div>
+        <div><label style="font-size:12px">Focus on one customer</label><br>
+          <select id="set_suggfocus" style="background:#0c121b;border:1px solid #202a3a;border-radius:8px;color:#e6edf3;font:inherit;font-size:13px;padding:8px 10px;margin-top:3px;min-width:210px">
+            <option value="">Auto — follow my next meeting</option></select></div>
+      </div></div>
+    <div style="margin-top:16px"><button class="btn" onclick="saveSettings()">Save settings</button>
+    <span id="set_msg" style="color:#39d353;font-size:12px;margin-left:12px"></span></div>
+    <div style="margin-top:22px;padding-top:16px;border-top:1px solid #1d2735">
+      <label>🧠 Brain Rules <span class="muted" style="font-weight:400">— train how the ATLAS brain works</span></label>
+      <div style="color:#8b949e;font-size:12px;margin:2px 0 6px">Read on every brainwave and injected into the brain's prompts. Rule 1 is “look at the customer's organized artifacts first.”</div>
+      <textarea id="set_rules" rows="14" style="width:100%;background:#0c121b;border:1px solid #202a3a;border-radius:8px;color:#e6edf3;font:13px/1.5 Consolas,monospace;padding:12px"></textarea>
+      <div style="margin-top:8px"><button class="btn" onclick="saveBrainRules()">Save brain rules</button>
+        <button class="btn ghost" onclick="resetBrainRules()" style="margin-left:6px" title="Discard your edits and restore the built-in default rules">↺ Reset to default</button>
+        <span id="rules_path" class="muted" style="font-size:11px;margin-left:10px"></span></div>
+    </div>
+    </div></div>`;
+  $('set_to').value=s.trip_report_recipients||"";
+  $('set_sig').value=s.email_signature||"";
+  $('set_auto').checked=!!s.auto_email_trip_reports;
+  if($('set_showchrome'))$('set_showchrome').checked=!!s.show_chrome_windows;
+  $('set_pin').value=s.system_pin||"";
+  if($('set_tz'))$('set_tz').value=s.timezone||"America/New_York";
+  if($('set_sugg'))$('set_sugg').checked=s.continual_suggestions!==false;
+  if($('set_suggai'))$('set_suggai').checked=s.suggestions_ai!==false;
+  if($('set_suggwh'))$('set_suggwh').checked=s.suggestions_workhours_only!==false;
+  if($('set_suggfreq'))$('set_suggfreq').value=String(s.suggestions_frequency_min||60);
+  if($('set_suggfocus')){
+    const cs=await api('customers')||[];
+    cs.forEach(c=>{const o=document.createElement('option');o.value=c.name;o.textContent=c.name;$('set_suggfocus').appendChild(o);});
+    $('set_suggfocus').value=s.suggestions_focus_customer||"";
+  }
+  const br=await api('get_brain_rules')||{};
+  if($('set_rules'))$('set_rules').value=br.text||"";
+  if($('rules_path'))$('rules_path').textContent=br.path||"";
+}
+async function saveBrainRules(){
+  const t=$('set_rules')?$('set_rules').value:"";
+  const r=await api('save_brain_rules',{text:t});
+  toast(r&&r.ok?'🧠 Brain rules saved':'Save failed');
+}
+async function resetBrainRules(){
+  if(!confirm('Reset the Brain Rules to the built-in defaults? Any edits you made will be discarded.'))return;
+  const r=await api('reset_brain_rules');
+  if(r&&r.ok){ if($('set_rules'))$('set_rules').value=r.text||""; toast('↺ Brain rules reset to default'); }
+  else toast('Reset failed');
+}
+async function openManual(){
+  const r=await api('open_manual');
+  toast(r&&r.ok?'📖 Opening user manual…':((r&&r.error)||'Could not open manual'));
+}
+async function saveSettings(){
+  const pin=$('set_pin')?$('set_pin').value.trim():"";
+  if(pin&&!/^\d{6}$/.test(pin)){toast('System PIN must be exactly 6 digits');return;}
+  const data={trip_report_recipients:$('set_to').value.trim(),
+              email_signature:$('set_sig').value.trim(),
+              auto_email_trip_reports:$('set_auto').checked,
+              show_chrome_windows:$('set_showchrome')?$('set_showchrome').checked:false,
+              system_pin:pin,
+              timezone:$('set_tz')?$('set_tz').value:'America/New_York',
+              continual_suggestions:$('set_sugg')?$('set_sugg').checked:true,
+              suggestions_ai:$('set_suggai')?$('set_suggai').checked:true,
+              suggestions_workhours_only:$('set_suggwh')?$('set_suggwh').checked:true,
+              suggestions_frequency_min:$('set_suggfreq')?parseInt($('set_suggfreq').value,10)||60:60,
+              suggestions_focus_customer:$('set_suggfocus')?$('set_suggfocus').value:""};
+  await api('save_settings',{data});
+  const m=$('set_msg');if(m){m.textContent='✓ Saved';setTimeout(()=>m.textContent='',1800);}
+  toast('Settings saved');
+}
+
+/* ---------- CRON JOBS (scheduled instructions) ---------- */
+const _WD=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+async function showCrons(){
+  VIEW='crons';
+  const crons=await api('get_crons')||[];
+  const inp='width:100%;background:#0c121b;border:1px solid #202a3a;border-radius:8px;color:#e6edf3;font:inherit;font-size:14px;padding:11px 12px';
+  let h=`<div class="scrollview fade"><div class="h1">⏰ Cron Jobs</div>
+    <div class="muted" style="margin:-4px 0 14px;font-size:12px">Tell ATLAS to do something on a schedule. When it fires, the instruction runs through the brain — just like typing it in the command box. Fires while ATLAS is open, in your <a style="color:#56d4dd;cursor:pointer" onclick="showSettings()">Settings timezone</a>.</div>
+    <section class="bpanel" style="max-width:760px">
+      <h2>➕ New scheduled job</h2>
+      <label style="font-size:12px;color:#8b949e">Instruction</label>
+      <textarea id="cr_instr" rows="2" placeholder="e.g. create a trip report for all of today's meetings" style="${inp}"></textarea>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;align-items:flex-end">
+        <div><label style="font-size:12px;color:#8b949e">Time</label><br><input type="time" id="cr_time" value="17:00" style="${inp};max-width:140px"></div>
+        <div><label style="font-size:12px;color:#8b949e">Repeat</label><br>
+          <select id="cr_rep" onchange="crRepChange()" style="${inp};max-width:160px">
+            <option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div>
+        <div id="cr_domwrap" style="display:none"><label style="font-size:12px;color:#8b949e">Day of month</label><br>
+          <input type="number" id="cr_dom" min="1" max="31" value="1" style="${inp};max-width:110px"></div>
+      </div>
+      <div id="cr_dayswrap" style="display:none;margin-top:10px">
+        <label style="font-size:12px;color:#8b949e">On these days</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px">${_WD.map((d,i)=>`<label class="copybtn" style="padding:6px 10px;cursor:pointer"><input type="checkbox" class="cr_day" value="${i}" style="width:auto;margin-right:5px">${d}</label>`).join('')}</div>
+      </div>
+      <div style="margin-top:14px"><button class="btn" onclick="addCron()">➕ Add scheduled job</button></div>
+    </section>
+    <h2 style="margin:20px 0 8px;font-size:15px">Scheduled (${crons.length})</h2>`;
+  if(!crons.length)h+=`<div class="empty">No scheduled jobs yet.</div>`;
+  crons.forEach(c=>{h+=`<div class="bcard" style="display:flex;align-items:center;gap:12px;${c.enabled?'':'opacity:.55'}">
+    <div style="flex:1">
+      <div class="bt">${c.enabled?'⏰':'⏸'} ${esc(c.instruction)}</div>
+      <div class="bsub">${esc(c.label)}${c.next_run?' · next: '+esc(c.next_run):''}${c.last_fired?' · last fired '+esc(c.last_fired):''}</div>
+    </div>
+    <button class="copybtn" style="padding:5px 10px" onclick='toggleCron(${JSON.stringify(c.id)})'>${c.enabled?'Disable':'Enable'}</button>
+    <button class="copybtn" style="padding:5px 9px;border-color:#5b2333;color:#ff9a9a" onclick='delCron(${JSON.stringify(c.id)})'>🗑</button></div>`;});
+  $('view').innerHTML=h+`</div>`;
+  crRepChange();
+}
+function crRepChange(){
+  const rep=$('cr_rep')?$('cr_rep').value:'daily';
+  if($('cr_dayswrap'))$('cr_dayswrap').style.display=rep==='weekly'?'block':'none';
+  if($('cr_domwrap'))$('cr_domwrap').style.display=rep==='monthly'?'block':'none';
+}
+async function addCron(){
+  const instruction=$('cr_instr')?$('cr_instr').value.trim():'';
+  if(!instruction){toast('Enter an instruction');return;}
+  const repeat=$('cr_rep').value;
+  const days=[...document.querySelectorAll('.cr_day:checked')].map(x=>parseInt(x.value));
+  if(repeat==='weekly'&&!days.length){toast('Pick at least one day');return;}
+  const r=await api('add_cron',{instruction,time:$('cr_time').value,repeat,days,dom:parseInt($('cr_dom').value||'1')});
+  toast(r&&r.ok?'⏰ Scheduled':'Could not add');
+  showCrons();
+}
+async function toggleCron(id){await api('toggle_cron',{id});showCrons();}
+async function delCron(id){await api('delete_cron',{id});toast('Removed');showCrons();}
+
+/* ---------- CUSTOMER VAULT ---------- */
+let CUSTOMERS=[], CUSTFILTER='';
+async function showCustomers(){
+  VIEW='customers';
+  CUSTOMERS=await api('customers')||[];
+  let h=`<div class="scrollview fade"><div class="h1">💼 Customer Vault</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;max-width:520px">
+      <input type="text" id="newcust" class="cmd" placeholder="New customer — e.g. AmeriVet" onkeydown="if(event.key==='Enter')newCustomer()">
+      <button class="cmdgo" onclick="newCustomer()">＋</button></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;max-width:520px">
+      <input type="text" id="custsearch" class="cmd" placeholder="🔎 Search customers…" oninput="filterCustomers()" onkeydown="if(event.key==='Escape'){this.value='';filterCustomers();}">
+      <span id="custcount" class="muted" style="font-size:12px;white-space:nowrap"></span></div>
+    <div id="custgrid"></div></div>`;
+  $('view').innerHTML=h;
+  const sb=$('custsearch'); if(sb){sb.value=CUSTFILTER; sb.focus();}
+  renderCustomerGrid();
+}
+function renderCustomerGrid(){
+  const q=CUSTFILTER.trim().toLowerCase();
+  const list=q?CUSTOMERS.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.slug||'').toLowerCase().includes(q)):CUSTOMERS;
+  const cnt=$('custcount'); if(cnt)cnt.textContent=q?`${list.length} of ${CUSTOMERS.length}`:`${CUSTOMERS.length} customer${CUSTOMERS.length===1?'':'s'}`;
+  const g=$('custgrid'); if(!g)return;
+  if(!CUSTOMERS.length){g.innerHTML=`<div class="empty">No customers yet. Each one becomes a folder with artifacts / account_technology_profile / network_diagrams / trip_reports.</div>`;return;}
+  if(!list.length){g.innerHTML=`<div class="empty">No customers match “${esc(CUSTFILTER)}”.</div>`;return;}
+  let h=`<div class="grid">`;
+  list.forEach((c,idx)=>{h+=`<div class="skill" style="--a:${accent(idx)}" onclick='showCustomer(${JSON.stringify(c.name)})'>
+    <div class="sname"><span class="sicon">📁</span>${esc(c.name)}</div>
+    <div class="sdesc">${c.total} file(s) · ${c.counts.trip_reports} trip report(s) · ${c.counts.network_diagrams} diagram(s)</div></div>`;});
+  g.innerHTML=h+`</div>`;
+}
+function filterCustomers(){const sb=$('custsearch');CUSTFILTER=sb?sb.value:'';renderCustomerGrid();}
+async function newCustomer(){
+  const el=$('newcust'); if(!el)return; const name=el.value.trim(); if(!name)return;
+  const r=await api('create_customer',{name});
+  toast(r&&r.ok?'Customer created':'Could not create'); showCustomers();
+}
+/* ---------- generic PIN-guarded soft-delete (customers + artifacts) ---------- */
+let DELCB=null;   // async (pin) => api result, set per modal
+function pinDeleteModal(title, bodyHtml, onConfirm){
+  DELCB=onConfirm;
+  const old=$('delpop'); if(old)old.remove();
+  const ov=document.createElement('div');
+  ov.id='delpop';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(3,6,12,.72);display:flex;align-items:center;justify-content:center;z-index:200';
+  ov.innerHTML=`<div style="background:#0c121b;border:1px solid #5b2333;border-radius:14px;padding:22px 24px;max-width:430px;box-shadow:0 20px 60px rgba(0,0,0,.6)">
+    <div style="font-size:17px;font-weight:700;color:#ff9a9a;margin-bottom:8px">🗑 ${title}</div>
+    <div style="color:#c4ccd6;font-size:13px;line-height:1.5;margin-bottom:14px">${bodyHtml}</div>
+    <label style="font-size:12px;color:#8b949e">Enter your 6-digit System PIN to confirm</label>
+    <input type="password" id="del_pin" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="••••••"
+      style="width:100%;margin-top:5px;background:#070b11;border:1px solid #20324a;border-radius:8px;color:#e6edf3;padding:10px;letter-spacing:6px;font-size:16px"
+      oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(event.key==='Enter')pinDeleteConfirm()">
+    <div id="del_msg" style="color:#ff6b6b;font-size:12px;min-height:16px;margin-top:6px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+      <button class="btn ghost" onclick="document.getElementById('delpop').remove()">Cancel</button>
+      <button class="btn" style="background:#7a1f2f;border-color:#7a1f2f" onclick="pinDeleteConfirm()">Delete</button></div></div>`;
+  document.body.appendChild(ov);
+  setTimeout(()=>{const el=$('del_pin');if(el)el.focus();},50);
+}
+async function pinDeleteConfirm(){
+  const el=$('del_pin'); const pin=el?el.value.trim():''; const msg=$('del_msg');
+  if(!/^\d{6}$/.test(pin)){if(msg)msg.textContent='Enter all 6 digits.';return;}
+  if(!DELCB)return;
+  const r=await DELCB(pin);
+  if(r&&r.ok){const p=$('delpop');if(p)p.remove();}
+  else if(msg)msg.textContent=(r&&r.message)||'Delete failed.';
+}
+function deleteCustomerPrompt(name){
+  pinDeleteModal(`Delete ${esc(name)}?`,
+    `This moves the entire customer folder — trip reports, profiles, diagrams, every generation — into the <b>recycle bin</b>. It disappears from ATLAS but is not erased; restore it from <code>vault/recyclebin</code>.`,
+    async pin=>{const r=await api('delete_customer',{name,pin});
+      if(r&&r.ok){toast('🗑 '+name+' moved to recycle bin');showCustomers();}return r;});
+}
+function deleteArtifactPrompt(id,label){
+  pinDeleteModal(`Delete this artifact?`,
+    `<b>${esc(label)}</b><br>This moves the artifact and its files into the <b>recycle bin</b>. It disappears from ATLAS but is not erased; restore it from <code>vault/recyclebin/artifacts</code>.`,
+    async pin=>{const r=await api('delete_artifact',{id,pin});
+      if(r&&r.ok){toast('🗑 Moved to recycle bin');
+        if(VIEW==='brainwaves')showBrainwaves();
+        else if(VIEW==='artifacts'){ARTS=await api('artifacts')||[];showArtifacts();}
+        else if(VIEW==='home')refreshConsole(); else showHome();}
+      return r;});
+}
+/* ---------- PEOPLE RESOURCES (CSV-backed resource directory) ---------- */
+let PEOPLE=[], PFILTER='', PCAT='Engineer';
+const PCATS=['Engineer','Vendor','Assessment','Tool','All'];
+const PFIELDS=[['name','Name'],['category','Category (Engineer/Vendor/Assessment/Tool)'],
+  ['practice','Practice'],['specialty','Skills / specialty'],['region','Region / alignment'],
+  ['manager','Manager'],['location','Location'],['title','Title'],['email','Email'],
+  ['org','SHI / External'],['link','Link'],['notes','Notes']];
+
+async function showPeople(){
+  VIEW='people';
+  PEOPLE=await api('get_people')||[];
+  let h=`<div class="scrollview fade"><div class="h1">🧑‍💼 People Resources</div>
+    <div class="muted" style="margin:-4px 0 12px;font-size:12px">The SHI resource directory — find the right engineer or vendor by region, skill, or practice. Edits save to <code>resources.csv</code> (the source of truth) and require your System PIN. Importing a new CSV archives the old one.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      ${PCATS.map(c=>`<button class="copybtn pcat" data-c="${c}" onclick="setPCat('${c}')">${c==='All'?'All':c+'s'}</button>`).join('')}
+      <span style="flex:1"></span>
+      <button class="copybtn" onclick="refreshPeople()">↻ Refresh</button>
+      <button class="copybtn" onclick="importPeople()">⬇ Import CSV</button>
+      <button class="btn" onclick="addPersonForm()">＋ Add</button></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;max-width:600px">
+      <input type="text" id="psearch" class="cmd" placeholder="🔎 Search name, skill (EDR, PAM), region (TOLA), manager…" oninput="filterPeople()" onkeydown="if(event.key==='Escape'){this.value='';filterPeople();}">
+      <span id="pcount" class="muted" style="font-size:12px;white-space:nowrap"></span></div>
+    <div id="plist"></div></div>`;
+  $('view').innerHTML=h;
+  const sb=$('psearch'); if(sb){sb.value=PFILTER; sb.focus();}
+  hlPCat(); renderPeople();
+}
+function setPCat(c){PCAT=c;hlPCat();renderPeople();}
+function hlPCat(){document.querySelectorAll('.pcat').forEach(b=>{const on=b.dataset.c===PCAT;b.style.borderColor=on?'#56d4dd':'';b.style.color=on?'#56d4dd':'';});}
+function filterPeople(){const sb=$('psearch');PFILTER=sb?sb.value:'';renderPeople();}
+function _pmatch(p,q){return ['name','specialty','region','practice','manager','title','email','org','location'].some(k=>(p[k]||'').toLowerCase().includes(q));}
+function renderPeople(){
+  const q=PFILTER.trim().toLowerCase();
+  let list=PEOPLE.filter(p=>PCAT==='All'||p.category===PCAT);
+  if(q)list=list.filter(p=>_pmatch(p,q));
+  const cnt=$('pcount'); if(cnt)cnt.textContent=`${list.length}${(q||PCAT!=='All')?' of '+PEOPLE.length:''}`;
+  const g=$('plist'); if(!g)return;
+  if(!PEOPLE.length){g.innerHTML=`<div class="empty">No resources yet. Drop a .csv in the import/ folder and click Import.</div>`;return;}
+  if(!list.length){g.innerHTML=`<div class="empty">No matches${PCAT!=='All'?' in '+PCAT+'s':''}.</div>`;return;}
+  let h='';
+  list.forEach(p=>{
+    const badge=p.org==='External'?`<span style="color:#f0b429">External</span>`:`<span style="color:#39d353">SHI</span>`;
+    const meta=[p.practice,p.region,p.location||p.title,p.manager?('mgr: '+p.manager):''].filter(Boolean).map(esc).join(' · ');
+    // Email always shows when present (its own line); skills + link are separate lines.
+    const emailLine=p.email?`<div class="bsub">📧 <a style="color:#56d4dd;cursor:pointer" onclick='openDiagram(${JSON.stringify("mailto:"+p.email)})'>${esc(p.email)}</a></div>`:'';
+    const skillsLine=p.specialty?`<div class="bsub" style="color:#9fb0c3">${esc(p.specialty)}</div>`:'';
+    const linkLine=(p.link&&!p.specialty)?`<div class="bsub"><a style="color:#56d4dd;cursor:pointer" onclick='openDiagram(${JSON.stringify(p.link)})'>${esc(p.link)}</a></div>`:'';
+    h+=`<div class="bcard" style="display:flex;align-items:flex-start;gap:12px">
+      <div style="flex:1;min-width:0">
+        <div class="bt">${esc(p.name)} <span style="font-size:11px;font-weight:500">· ${badge}</span></div>
+        <div class="bsub">${meta||'—'}</div>${emailLine}${skillsLine}${linkLine}</div>
+      <button class="copybtn" style="padding:5px 10px" onclick='editPerson(${JSON.stringify(p.id)})'>✎ Edit</button>
+      <button class="copybtn" style="padding:5px 9px;border-color:#5b2333;color:#ff9a9a" onclick='delPerson(${JSON.stringify(p.id)},${JSON.stringify(p.name)})'>🗑</button></div>`;});
+  g.innerHTML=h;
+}
+async function refreshPeople(){PEOPLE=await api('refresh_people')||[];renderPeople();toast('↻ Reloaded from resources.csv');}
+function _personForm(p,isNew){
+  const inp='width:100%;background:#0c121b;border:1px solid #202a3a;border-radius:8px;color:#e6edf3;font:inherit;font-size:14px;padding:10px 12px;margin-bottom:4px';
+  let f='';
+  PFIELDS.forEach(([k,lab])=>{const v=esc(p[k]||'');
+    f+=(k==='specialty'||k==='notes')
+      ?`<label>${lab}</label><textarea id="pf_${k}" rows="2" style="${inp}">${v}</textarea>`
+      :`<label>${lab}</label><input type="text" id="pf_${k}" value="${v}" style="${inp}">`;});
+  $('view').innerHTML=`<div class="scrollview fade"><div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick="showPeople()">← People Resources</a></div>
+    <div class="h1">${isNew?'＋ Add resource':'✎ '+esc(p.name||'')}</div>
+    <div style="max-width:620px">${f}
+    <button class="btn" style="margin-top:8px" onclick='savePerson(${JSON.stringify(p.id||"")},${isNew?'true':'false'})'>💾 Save (PIN)</button></div></div>`;
+}
+function editPerson(id){const p=PEOPLE.find(x=>x.id===id);if(p)_personForm(p,false);}
+function addPersonForm(){_personForm({category:(PCAT==='All'?'Engineer':PCAT)},true);}
+function savePerson(id,isNew){
+  const fields={};PFIELDS.forEach(([k])=>{const el=$('pf_'+k);fields[k]=el?el.value.trim():'';});
+  if(!fields.name){toast('Name is required');return;}
+  pinPrompt(isNew?'Add resource':'Save changes','Writes to <code>resources.csv</code>, the source of truth.',
+    async pin=>{const r=isNew?await api('people_add',{fields,pin}):await api('people_save',{id,fields,pin});
+      if(r&&r.ok){toast('💾 Saved');showPeople();}return r;});
+}
+function delPerson(id,name){
+  pinPrompt(`Delete ${esc(name)}?`,'Removes the row from <code>resources.csv</code>. Recoverable — the full prior CSV is archived on every import.',
+    async pin=>{const r=await api('people_delete',{id,pin});
+      if(r&&r.ok){toast('🗑 Removed');showPeople();}return r;});
+}
+function importPeople(){
+  pinPrompt('Import a CSV','Imports the newest <code>.csv</code> from the people-resources <code>import/</code> folder and <b>archives</b> the current one (nothing is deleted).',
+    async pin=>{const r=await api('people_import',{pin});
+      if(r&&r.ok){toast('⬇ Imported '+r.count+' record(s)');showPeople();}
+      else if(r&&r.error==='no_file'){toast('Drop a .csv in the import/ folder first');}
+      return r;});
+}
+/* neutral System-PIN prompt (edits/import) — sibling of pinDeleteModal */
+let PINCB=null;
+function pinPrompt(title, bodyHtml, onConfirm){
+  PINCB=onConfirm;
+  const old=$('pinpop'); if(old)old.remove();
+  const ov=document.createElement('div'); ov.id='pinpop';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(3,6,12,.72);display:flex;align-items:center;justify-content:center;z-index:200';
+  ov.innerHTML=`<div style="background:#0c121b;border:1px solid #20324a;border-radius:14px;padding:22px 24px;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.6)">
+    <div style="font-size:17px;font-weight:700;color:#56d4dd;margin-bottom:8px">🔒 ${title}</div>
+    <div style="color:#c4ccd6;font-size:13px;line-height:1.5;margin-bottom:14px">${bodyHtml}</div>
+    <label style="font-size:12px;color:#8b949e">Enter your 6-digit System PIN</label>
+    <input type="password" id="pin_in" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="••••••"
+      style="width:100%;margin-top:5px;background:#070b11;border:1px solid #20324a;border-radius:8px;color:#e6edf3;padding:10px;letter-spacing:6px;font-size:16px"
+      oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(event.key==='Enter')pinPromptConfirm()">
+    <div id="pin_msg" style="color:#ff6b6b;font-size:12px;min-height:16px;margin-top:6px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+      <button class="btn ghost" onclick="document.getElementById('pinpop').remove()">Cancel</button>
+      <button class="btn" onclick="pinPromptConfirm()">Confirm</button></div></div>`;
+  document.body.appendChild(ov);
+  setTimeout(()=>{const el=$('pin_in');if(el)el.focus();},50);
+}
+async function pinPromptConfirm(){
+  const el=$('pin_in'); const pin=el?el.value.trim():''; const msg=$('pin_msg');
+  if(!/^\d{6}$/.test(pin)){if(msg)msg.textContent='Enter all 6 digits.';return;}
+  if(!PINCB)return;
+  const r=await PINCB(pin);
+  if(r&&r.ok){const p=$('pinpop');if(p)p.remove();}
+  else if(msg)msg.textContent=(r&&r.message)||'Failed.';
+}
+let ATPGEN={customer:'',id:'current',topo:'',uri:''};
+async function showCustomer(name){
+  VIEW='customer';
+  const d=await api('customer',{name}); if(!d)return;
+  ATPGEN={customer:name,id:'current',topo:'',uri:''};
+  const labels={artifacts:'🗂 Artifacts',account_technology_profile:'🧩 Account Technology Profile',
+                network_diagrams:'🗺 Network Diagrams',trip_reports:'🧾 Trip Reports'};
+  let h=`<div class="scrollview fade"><div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick="showCustomers()">← Vault</a></div>
+    <div class="h1">📁 ${esc(d.name)}</div><div class="crumb">${esc(d.path)}</div>
+    <div style="margin:6px 0 4px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" onclick='showATP(${JSON.stringify(d.name)})'>🧩 Edit Technology Profile</button>
+      <button class="btn ghost" onclick='showSelectedTopology()'>🛰 Topology</button>
+      <button class="btn purple" onclick='atpGenerate(${JSON.stringify(d.name)})'>✨ Generate from trip reports</button>
+      <button class="btn ghost" style="margin-left:auto;border-color:#5b2333;color:#ff9a9a" onclick='deleteCustomerPrompt(${JSON.stringify(d.name)})'>🗑 Delete customer</button></div>
+    <div id="profsec"></div>`;
+  Object.keys(labels).forEach(sub=>{
+    const files=(d.folders&&d.folders[sub])||[];
+    h+=`<section class="bpanel" style="margin-top:12px"><h2>${labels[sub]} <span class="muted">(${files.length})</span></h2>`;
+    if(!files.length)h+=`<div class="empty">empty</div>`;
+    files.forEach(f=>{const open=f.artifact_id?`openArtifact(${JSON.stringify(f.artifact_id)})`:`openDiagram(${JSON.stringify(f.uri)})`;
+      h+=`<div class="mini" onclick='${open}'><div class="mt"><span>${f.artifact_id?'🧾':'📄'}</span>${esc(f.name)}</div></div>`;});
+    h+=`</section>`;
+  });
+  $('view').innerHTML=h+`</div>`;
+  loadProfile(name,'');   // default: latest generation (or live Current)
+}
+async function loadProfile(name, genId){
+  const prof=await api('atp_profile',{customer:name,generation:genId||''})||{};
+  ATPGEN={customer:name,id:prof.id||'current',topo:prof.topology_html||'',uri:prof.topology_uri||''};
+  const ps=$('profsec'); if(!ps)return;
+  ps.innerHTML=renderGenPicker(prof.generations||[],ATPGEN.id)
+    +renderOverview(prof.overview)+renderContacts(prof.contacts);
+}
+function renderGenPicker(gens,sel){
+  if(!gens||!gens.length)return '';
+  let h=`<section class="bpanel" style="margin-top:12px"><h2>📅 Generations <span class="muted">(${gens.length})</span></h2>
+    <div class="muted" style="margin:-2px 0 8px;font-size:12px">Each ✨ Generate is saved as a dated snapshot — click one to view its overview, contacts &amp; topology.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">`;
+  gens.forEach(g=>{const on=g.id===sel;
+    h+=`<div class="bcard" style="cursor:pointer;min-width:150px${on?';border-color:#56d4dd;box-shadow:0 0 0 1px #56d4dd inset':''}"
+      onclick='loadProfile(${JSON.stringify(ATPGEN.customer)},${JSON.stringify(g.id)})'>
+      <div class="bt">${on?'✓ ':''}${esc(g.created_display||g.id)}</div>
+      <div class="bsub">${g.techs||0} tech · ${g.contacts||0} contacts${g.has_overview?'':' · no overview'}</div></div>`;});
+  return h+`</div></section>`;
+}
+function showSelectedTopology(){ showTopology(ATPGEN.customer, ATPGEN.topo, ATPGEN.uri); }
+function editBtn(fn){ // only the editable live 'Current' profile shows an edit affordance
+  return ATPGEN.id==='current'
+    ? `<button class="copybtn" style="padding:3px 10px;margin-left:auto" onclick="${fn}">✎ Edit</button>` : '';
+}
+function renderOverview(ov){
+  ov=ov||{};
+  const has=ov.workloads_hosting||ov.applications_systems||ov.business_operations;
+  if(!has&&ATPGEN.id!=='current')return '';   // nothing to show on a past snapshot
+  const sec=(label,t)=>`<div class="bt" style="font-size:12px;color:#56d4dd;margin-top:8px">${label}</div><p style="margin:2px 0 0;line-height:1.55;color:#dbe5ef">${t?esc(t):'<span class=muted>—</span>'}</p>`;
+  let h=`<section class="bpanel" style="margin-top:12px"><h2 style="display:flex;align-items:center">🧭 Overview${editBtn("editOverview()")}</h2>`;
+  if(!has)h+=`<div class="empty">No overview yet — click ✎ Edit to write one, or ✨ Generate.</div>`;
+  else h+=sec('Workloads & Hosting',ov.workloads_hosting)+sec('Applications & Systems',ov.applications_systems)+sec('Business Operations',ov.business_operations);
+  return h+`</section>`;
+}
+function renderContacts(cs){
+  cs=cs||[];
+  if(!cs.length&&ATPGEN.id!=='current')return '';
+  const card=c=>`<div class="bcard"><div class="bt">${esc(c.name)}${c.is_customer?'':' <span class="chip">SHI</span>'}</div>
+    <div class="bsub">${esc(c.title||'(role unknown)')}${c.company?' · '+esc(c.company):''}</div></div>`;
+  const cust=cs.filter(c=>c.is_customer), shi=cs.filter(c=>!c.is_customer);
+  let h=`<section class="bpanel" style="margin-top:12px"><h2 style="display:flex;align-items:center">👥 Key Contacts <span class="muted" style="margin-left:6px">(${cs.length})</span>${editBtn("editContacts()")}</h2>`;
+  if(!cs.length)h+=`<div class="empty">No contacts yet — click ✎ Edit to add, or ✨ Generate.</div>`;
+  if(cust.length)h+=`<div class="bt" style="margin:2px 0 6px">Customer</div>${cust.map(card).join('')}`;
+  if(shi.length)h+=`<div class="bt" style="margin:12px 0 6px">SHI / Vendor</div>${shi.map(card).join('')}`;
+  return h+`</section>`;
+}
+/* ---------- Overview editor (edits the live Current profile) ---------- */
+async function editOverview(){
+  const name=ATPGEN.customer;
+  const prof=await api('atp_profile',{customer:name,generation:'current'})||{};
+  const ov=prof.overview||{};
+  const ta='width:100%;background:#0c121b;border:1px solid #202a3a;border-radius:8px;color:#e6edf3;font:inherit;padding:10px;line-height:1.5';
+  const fld=(id,label,val)=>`<label style="display:block;margin:10px 0 4px;color:#56d4dd">${label}</label><textarea id="ov_${id}" rows="5" style="${ta}">${esc(val||'')}</textarea>`;
+  $('view').innerHTML=`<div class="scrollview fade"><div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick='showCustomer(${JSON.stringify(name)})'>← ${esc(name)}</a></div>
+    <div class="h1">🧭 Edit Overview — ${esc(name)}</div>
+    <div class="muted" style="margin:-4px 0 6px;font-size:12px">Saved to the live <b>Current</b> profile.</div>
+    <div style="max-width:760px">
+      ${fld('workloads_hosting','Workloads & Hosting',ov.workloads_hosting)}
+      ${fld('applications_systems','Applications & Systems',ov.applications_systems)}
+      ${fld('business_operations','Business Operations',ov.business_operations)}
+      <button class="btn" style="margin-top:12px" onclick='saveOverview(${JSON.stringify(name)})'>💾 Save</button></div></div>`;
+}
+async function saveOverview(name){
+  const g=id=>{const el=$('ov_'+id);return el?el.value.trim():'';};
+  const overview={workloads_hosting:g('workloads_hosting'),applications_systems:g('applications_systems'),business_operations:g('business_operations')};
+  const r=await api('atp_save_overview',{customer:name,overview});
+  toast(r&&r.ok?'Overview saved':'Save failed');
+  showCustomer(name);
+}
+/* ---------- Key Contacts editor (edits the live Current profile) ---------- */
+let CEDIT={customer:'',list:[]};
+async function editContacts(){
+  const name=ATPGEN.customer;
+  const prof=await api('atp_profile',{customer:name,generation:'current'})||{};
+  CEDIT={customer:name,list:(prof.contacts||[]).map(c=>({name:c.name||'',title:c.title||'',company:c.company||'',is_customer:c.is_customer!==false}))};
+  renderContactsEditor();
+}
+function ceRead(){ // pull current input values back into state before any re-render
+  CEDIT.list.forEach((c,i)=>{
+    const n=$('ce_n'+i),t=$('ce_t'+i),co=$('ce_c'+i),cu=$('ce_cu'+i);
+    if(n)c.name=n.value; if(t)c.title=t.value; if(co)c.company=co.value; if(cu)c.is_customer=cu.value==='customer';
+  });
+}
+function ceAdd(){ceRead();CEDIT.list.push({name:'',title:'',company:'',is_customer:true});renderContactsEditor();}
+function ceDel(i){ceRead();CEDIT.list.splice(i,1);renderContactsEditor();}
+function renderContactsEditor(){
+  const name=CEDIT.customer;
+  const inp='background:#0c121b;border:1px solid #202a3a;border-radius:7px;color:#e6edf3;font:inherit;padding:7px 9px';
+  const rows=CEDIT.list.map((c,i)=>`<div class="bcard" style="display:grid;grid-template-columns:1.2fr 1.4fr 1fr auto auto;gap:8px;align-items:center">
+    <input id="ce_n${i}" value="${esc(c.name)}" placeholder="Full name" style="${inp}">
+    <input id="ce_t${i}" value="${esc(c.title)}" placeholder="Title / role" style="${inp}">
+    <input id="ce_c${i}" value="${esc(c.company)}" placeholder="Company" style="${inp}">
+    <select id="ce_cu${i}" style="${inp}"><option value="customer" ${c.is_customer?'selected':''}>Customer</option><option value="shi" ${c.is_customer?'':'selected'}>SHI / Vendor</option></select>
+    <button class="copybtn" style="padding:5px 9px" onclick="ceDel(${i})">✕</button></div>`).join('');
+  $('view').innerHTML=`<div class="scrollview fade"><div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick='showCustomer(${JSON.stringify(name)})'>← ${esc(name)}</a></div>
+    <div class="h1">👥 Edit Key Contacts — ${esc(name)}</div>
+    <div class="muted" style="margin:-4px 0 8px;font-size:12px">Saved to the live <b>Current</b> profile. First-name-only people are fine.</div>
+    <div style="max-width:900px;display:flex;flex-direction:column;gap:8px">${rows||'<div class="empty">No contacts — add one.</div>'}</div>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button class="btn ghost" onclick="ceAdd()">＋ Add contact</button>
+      <button class="btn" onclick='saveContacts(${JSON.stringify(name)})'>💾 Save</button></div></div>`;
+}
+async function saveContacts(name){
+  ceRead();
+  const contacts=CEDIT.list.filter(c=>(c.name||'').trim());
+  const r=await api('atp_save_contacts',{customer:name,contacts});
+  toast(r&&r.ok?`Saved ${r.count} contact(s)`:'Save failed');
+  showCustomer(name);
+}
+async function assignPrompt(id){
+  const cs=await api('customers')||[];
+  const old=$('assignpop'); if(old)old.remove();
+  if(!cs.length){toast('Create a customer first in the Vault tab');return;}
+  const opts=cs.map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
+  const pop=document.createElement('div');
+  pop.id='assignpop'; pop.className='toast show'; pop.style.bottom='60px'; pop.style.pointerEvents='auto';
+  pop.innerHTML=`File to <select id="assignpick" style="margin:0 8px;background:#0b1119;color:#e6edf3;border:1px solid #20324a;border-radius:6px;padding:4px">${opts}</select>
+    <button class="cmdgo" style="padding:3px 10px" onclick='doAssign(${JSON.stringify(id)})'>Go</button>
+    <button class="copybtn" style="margin-left:6px;padding:3px 8px" onclick="this.parentElement.remove()">✕</button>`;
+  document.body.appendChild(pop);
+}
+async function doAssign(id){
+  const sel=$('assignpick'); if(!sel)return; const name=sel.value;
+  const pop=$('assignpop'); if(pop)pop.remove();
+  const r=await api('assign_artifact',{artifact_id:id,customer:name});
+  toast(r&&r.ok?`Filed into ${name} → ${r.folder}`:'Assign failed');
+  if(r&&r.ok&&VIEW==='artifact')openArtifact(id);          // reflect the new customer on the open report
+  else if(VIEW==='artifacts')loadArtifacts();
+}
+
+/* ---------- ATP: technology profile editor + topology ---------- */
+let ATP={customer:'',entries:[],statuses:[],cat:'datacenter'};
+const CATLABEL={datacenter:'Data Center',networking:'Networking',security:'Security',edge_iot:'Edge'};
+const STATCOLOR={active:'#39d353',planned:'#58a6ff',pilot:'#f0b429',evaluation:'#f0b429',legacy:'#f85149',unknown:'#8b949e'};
+async function showATP(name){
+  VIEW='atp'; ATP.customer=name;
+  const d=await api('atp_load',{customer:name})||{};
+  ATP.entries=d.entries||[]; ATP.statuses=d.statuses||['active','planned','pilot','evaluation','legacy','unknown'];
+  ATP.cat='datacenter'; renderATP();
+}
+function renderATP(){
+  VIEW='atp';
+  const cats=['datacenter','networking','security','edge_iot'];
+  let h=`<div class="scrollview fade"><div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick='showCustomer(${JSON.stringify(ATP.customer)})'>← ${esc(ATP.customer)}</a></div>
+    <div class="h1">🧩 Edit Technology Profile — ${esc(ATP.customer)}</div>
+    <div class="muted" style="margin:-4px 0 8px;font-size:12px">Editing the live <b>Current</b> profile — past generation snapshots are not changed.</div>
+    <div class="daytoggle">`;
+  cats.forEach(c=>{h+=`<button class="${ATP.cat===c?'on':''}" onclick="atpCat('${c}')">${CATLABEL[c]}</button>`;});
+  h+=`</div>
+    <div style="margin:10px 0;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" onclick="atpEdit(-1)">＋ Add technology</button>
+      <button class="btn ghost" onclick="atpSave()">💾 Save & render topology</button>
+      <button class="btn ghost" onclick='showTopology(${JSON.stringify(ATP.customer)})'>🛰 View topology</button>
+      <button class="btn purple" onclick='atpGenerate(${JSON.stringify(ATP.customer)})'>✨ Generate from trip reports</button></div>`;
+  const rows=ATP.entries.map((e,i)=>({e,i})).filter(x=>(x.e.category||'datacenter')===ATP.cat);
+  if(!rows.length)h+=`<div class="empty">No technologies in ${CATLABEL[ATP.cat]} yet — add one.</div>`;
+  rows.forEach(({e,i})=>{
+    h+=`<div class="mini" style="--a:${STATCOLOR[e.deployment_status]||'#8b949e'}">
+      <div class="mt"><span>🔹</span>${esc(e.vendor)}${e.product?' — '+esc(e.product):''}
+        <span style="margin-left:auto;display:flex;gap:6px">
+          <button class="copybtn" style="padding:3px 8px" onclick="atpEdit(${i})">edit</button>
+          <button class="copybtn" style="padding:3px 8px" onclick="atpDel(${i})">✕</button></span></div>
+      <div class="ms">${esc(e.deployment_status||'unknown')}${e.model_number?' · '+esc(e.model_number):''}${e.version?' · v'+esc(e.version):''}</div></div>`;
+  });
+  $('view').innerHTML=h+`</div>`;
+}
+function atpCat(c){ATP.cat=c;renderATP();}
+function atpDel(i){ATP.entries.splice(i,1);renderATP();}
+function atpEdit(i){
+  VIEW='atp';
+  const e=i>=0?ATP.entries[i]:{category:ATP.cat,deployment_status:'unknown',specifications:{}};
+  const specs=Object.entries(e.specifications||{}).map(([k,v])=>k+': '+v).join('\n');
+  const statusOpts=ATP.statuses.map(s=>`<option ${e.deployment_status===s?'selected':''}>${s}</option>`).join('');
+  const catOpts=['datacenter','networking','security','edge_iot'].map(c=>`<option value="${c}" ${(e.category||'datacenter')===c?'selected':''}>${CATLABEL[c]}</option>`).join('');
+  const ta='width:100%;background:#0c121b;border:1px solid #202a3a;border-radius:8px;color:#e6edf3;font:inherit;padding:10px';
+  const f=(id,val,ph)=>`<input type="text" id="atp_${id}" value="${esc(val||'')}" placeholder="${ph||''}">`;
+  $('view').innerHTML=`<div class="scrollview fade"><div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick="renderATP()">← back</a></div>
+    <div class="h1">${i>=0?'Edit':'Add'} technology</div>
+    <div style="max-width:560px">
+    <label>Vendor *</label>${f('vendor',e.vendor,'e.g. Cisco')}
+    <label>Product</label>${f('product',e.product,'e.g. Catalyst 9300')}
+    <label>Category</label><select id="atp_category">${catOpts}</select>
+    <label>Deployment status</label><select id="atp_deployment_status">${statusOpts}</select>
+    <label>Model number</label>${f('model_number',e.model_number)}
+    <label>Version</label>${f('version',e.version)}
+    <label>Deployment %</label>${f('deployment_percentage',e.deployment_percentage)}
+    <label>Satisfaction</label>${f('satisfaction_level',e.satisfaction_level)}
+    <label>Specifications (one per line, "key: value")</label><textarea id="atp_specs" rows="4" style="${ta}">${esc(specs)}</textarea>
+    <label>Notes</label><textarea id="atp_notes" rows="2" style="${ta}">${esc(e.notes||'')}</textarea>
+    <button class="btn" onclick="atpFormSave(${i})">Done</button></div></div>`;
+}
+function atpFormSave(i){
+  const g=id=>{const el=$('atp_'+id);return el?el.value.trim():'';};
+  const specs={};g('specs').split('\n').forEach(l=>{const m=l.match(/^([^:]+):(.*)$/);if(m&&m[1].trim())specs[m[1].trim()]=m[2].trim();});
+  const e={vendor:g('vendor'),product:g('product'),category:$('atp_category').value,
+    deployment_status:$('atp_deployment_status').value,model_number:g('model_number'),version:g('version'),
+    deployment_percentage:g('deployment_percentage'),satisfaction_level:g('satisfaction_level'),
+    specifications:specs,notes:g('notes')};
+  if(!e.vendor){toast('Vendor is required');return;}
+  if(i>=0)ATP.entries[i]=e; else ATP.entries.push(e);
+  ATP.cat=e.category; renderATP();
+}
+async function atpSave(){
+  const r=await api('atp_save',{customer:ATP.customer,entries:ATP.entries});
+  toast(r&&r.ok?`Saved ${r.count} · topology rendered`:'Save failed');
+}
+async function atpGenerate(name){
+  const r=await api('atp_generate',{customer:name});
+  if(!r||!r.id){toast('Could not start');return;}
+  toast('🛰 Reading '+name+' trip reports — see “Working on”');await tick();
+  // When the background job finishes, refresh the profile so its new dated generation appears.
+  (async()=>{
+    while(true){
+      const j=await api('job',{id:r.id});
+      if(j&&!ACTIVE(j.status)){
+        if(VIEW==='customer'&&ATPGEN.customer===name){toast('✅ New generation ready');loadProfile(name,'');}
+        else toast('✅ '+name+' generation ready');
+        break;
+      }
+      await sleep(2500);
+    }
+  })();
+}
+async function showTopology(name, html, uri){
+  VIEW='topology';
+  // html/uri provided => a specific generation snapshot; otherwise render the live profile.
+  if(html===undefined){const r=await api('atp_topology',{customer:name})||{}; html=r.html; uri=r.uri;}
+  const openLink=uri?`&nbsp;·&nbsp;<a style="cursor:pointer;color:#8b949e" onclick='openDiagram(${JSON.stringify(uri)})'>⛶ open in browser</a>`:'';
+  $('view').innerHTML=`<div style="height:100%;display:flex;flex-direction:column">
+    <div class="crumb" style="padding:0 0 8px"><a style="cursor:pointer;color:#56d4dd" onclick='showCustomer(${JSON.stringify(name)})'>← ${esc(name)}</a>${openLink}</div>
+    <iframe id="topoframe" style="flex:1;width:100%;border:1px solid #1d2735;border-radius:12px;background:#0a0a1a"></iframe></div>`;
+  const fr=$('topoframe'); if(fr&&html)fr.srcdoc=html;
+}
+
+/* ---------- markdown-lite ---------- */
+function mdBody(t){
+  const lines=esc(t||"").split("\n");let out="";let inList=false;let i=0;
+  const closeList=()=>{if(inList){out+="</ul>";inList=false;}};
+  const cells=l=>l.replace(/^\s*\|/,"").replace(/\|\s*$/,"").split("|").map(c=>c.trim());
+  while(i<lines.length){
+    const ln=lines[i];
+    // table: a row with pipes followed by a |---|---| separator
+    if(/\|/.test(ln)&&i+1<lines.length&&/^\s*\|?[\s:|-]*-[\s:|-]*\|[\s:|-]*$/.test(lines[i+1])){
+      closeList();
+      let h='<table class="md"><thead><tr>'+cells(ln).map(c=>"<th>"+bold(c)+"</th>").join("")+"</tr></thead><tbody>";
+      i+=2;
+      while(i<lines.length&&/\|/.test(lines[i])){h+="<tr>"+cells(lines[i]).map(c=>"<td>"+bold(c)+"</td>").join("")+"</tr>";i++;}
+      out+=h+"</tbody></table>";continue;
+    }
+    if(/^###\s+/.test(ln)){closeList();out+="<h3>"+bold(ln.replace(/^###\s+/,""))+"</h3>";i++;continue;}
+    if(/^##\s+/.test(ln)){closeList();out+="<h2>"+bold(ln.replace(/^##\s+/,""))+"</h2>";i++;continue;}
+    if(/^#\s+/.test(ln)){closeList();out+="<h1>"+bold(ln.replace(/^#\s+/,""))+"</h1>";i++;continue;}
+    if(/^\s*(---|\*\*\*|___)\s*$/.test(ln)){closeList();out+="<hr>";i++;continue;}
+    if(/^\s*>\s?/.test(ln)){closeList();out+="<blockquote>"+bold(ln.replace(/^\s*>\s?/,""))+"</blockquote>";i++;continue;}
+    if(/^\s*[-•]\s+/.test(ln)){if(!inList){out+="<ul>";inList=true;}out+="<li>"+bold(ln.replace(/^\s*[-•]\s+/,""))+"</li>";i++;continue;}
+    closeList();
+    if(ln.trim()==="")out+="<br>";else out+="<div>"+bold(ln)+"</div>";
+    i++;
+  }
+  closeList();
+  return out;
+}
+function bold(s){return s.replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>").replace(/`([^`]+)`/g,"<code>$1</code>");}
+
+init();
+</script>
+</body>
+</html>
