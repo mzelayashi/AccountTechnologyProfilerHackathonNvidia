@@ -61,13 +61,13 @@ class EnvironmentTopology(Skill):
         account = (ctx.get("account") or "").strip()
         if not account:
             return SkillResult(text="Enter an account name.")
-        log(f"Asking Copilot for {account}'s technology environment…")
+        log(f"Mapping {account}'s technology environment on Nemotron…")
         answer = ask(_PROMPT.format(account=account))
         techs = _parse(answer)
         if not techs:
             return SkillResult(
                 text=f"No technology environment data found for **{account}**.\n\n"
-                f"Copilot said:\n\n{answer}")
+                f"Model output:\n\n{answer}")
 
         log(f"Building topology from {len(techs)} technologies…")
         xml = drawio.topology(techs, account)

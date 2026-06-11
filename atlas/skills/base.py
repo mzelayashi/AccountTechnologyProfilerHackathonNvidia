@@ -69,7 +69,7 @@ class PromptSkill(Skill):
             p = (vault.account_dir(account) / self.save_subdir /
                  f"{datetime.date.today().isoformat()}_{self.save_name}")
             files = [vault.write_text(p, answer)]
-        return SkillResult(text=answer or "(no answer captured — see the Copilot window)", files=files)
+        return SkillResult(text=answer or "(no answer captured)", files=files)
 
 
 _REGISTRY: dict[str, Skill] = {}

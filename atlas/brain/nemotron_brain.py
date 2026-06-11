@@ -56,9 +56,13 @@ def saved_context(customer: str, cap_chars: int = 7500) -> str:
     # so it can overshoot — hard-truncate to keep the model's output budget intact.
     if len(text) > cap_chars:
         text = text[:cap_chars] + "\n…(saved data truncated to fit the context window)…"
-    return (f"You have NO live access to this customer's systems. Use ONLY the saved account data below "
-            f"to answer. If something isn't in it, say so.\n\n=== {customer} SAVED ACCOUNT DATA ===\n"
-            f"{text}\n\n=== END SAVED DATA ===\n\n")
+    return (f"The block below is {customer}'s OWN saved account data — our filed trip reports and "
+            f"technology profile for this account. Treat it as the authoritative, current record for "
+            f"{customer}, even if the text mentions other company names (names may differ from the "
+            f"account label — the data still belongs to {customer}). Base your entire answer on it. "
+            f"Do NOT reply that you have no data and do NOT refuse; if a specific detail isn't covered, "
+            f"just note it briefly and continue.\n\n=== {customer} SAVED ACCOUNT DATA ===\n{text}\n\n"
+            f"=== END SAVED DATA ===\n\n")
 
 
 # --------------------------------------------------------------------------- routing

@@ -94,15 +94,16 @@ class StrategicBriefing(Skill):
         account = (ctx.get("account") or "").strip()
         if not account:
             return SkillResult(text="Enter an account name.")
-        log(f"Asking Copilot for a strategic briefing on {account}…")
+        log(f"Generating a strategic briefing for {account} on Nemotron…")
         answer = ask(_prompt(account))
         if answer.strip().upper().startswith("NO DATA"):
-            return SkillResult(text=f"Copilot has no briefing data for **{account}**.")
+            return SkillResult(text=f"No saved briefing data for **{account}** yet — add trip reports "
+                                    f"or generate its technology profile first.")
         data = extract_json(answer)
         if not isinstance(data, dict) or not (
             data.get("executive_summary") or data.get("current_initiatives")
         ):
-            log("Copilot didn't return usable JSON — showing the raw answer.")
+            log("Model didn't return usable JSON — showing the raw answer.")
             return SkillResult(text=answer or "(no answer)")
 
         today = datetime.date.today().isoformat()

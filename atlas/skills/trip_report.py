@@ -173,7 +173,7 @@ class TripReport(Skill):
         log(f"Generating trip report for '{title}' from its transcript…")
         report = ask(_prefix(title, date) + TRIP_REPORT_PROMPT)
         if not report:
-            return SkillResult(text="No report captured — it's visible in the Copilot window.")
+            return SkillResult(text="No report captured.")
         body = _from_summary(_dedupe_title(report, title))   # Summary…Next Steps only
         customer = (ctx.get("customer") or "").strip() or _derive_customer(title)
         ae = (ctx.get("ae") or ctx.get("organizer") or "").strip()

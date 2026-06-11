@@ -18,4 +18,4 @@ class AskAnything(Skill):
         if not question:
             return SkillResult(text="(no question entered)")
         answer = ask(question)
-        return SkillResult(text=answer or "(no answer captured — see the Copilot window)")
+        return SkillResult(text=answer or "(no answer captured)")

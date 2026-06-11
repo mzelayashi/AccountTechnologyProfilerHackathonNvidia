@@ -44,7 +44,7 @@ class KnowledgeDrop(Skill):
                 log(f"  {p.name}: no extractable text")
                 continue
 
-            log(f"  classifying {p.name} with Copilot…")
+            log(f"  classifying {p.name} on Nemotron…")
             data = extract_json(ask(_CLASSIFY + text[:6000])) or {}
             account = (data.get("account") or "Unsorted").strip() or "Unsorted"
             summary = data.get("summary") or text[:400]

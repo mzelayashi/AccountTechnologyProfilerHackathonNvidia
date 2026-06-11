@@ -237,7 +237,7 @@ def gather_day(ask_chain, date, log=print) -> list[dict]:
 
     # If Copilot still refused calendar access, do NOT let the echoed template become a bogus meeting.
     if _is_no_access(answer):
-        log(f"⚠️ Copilot couldn't read the calendar for {date_str} — tap ↻ Refresh to retry.")
+        log(f"⚠️ Couldn't read the calendar for {date_str} — tap ↻ Refresh to retry.")
         return load_for(date_str) or []
 
     cards = _drop_placeholders(_parse_delimited(answer) or split_meetings(answer))

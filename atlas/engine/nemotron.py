@@ -98,7 +98,9 @@ def complete(prompt: str, *, system: str = "detailed thinking off",
         # prompt estimate before reserving the rest for output. The overflow self-correction below is
         # the hard guarantee if this still misjudges.
         budget = win - int(est_tokens(prompt) * 1.5) - est_tokens(system) - 256
-        max_tokens = max(384, min(4500, budget))
+        # Nemotron emits a long <think> block before the answer; allow most of the remaining window
+        # for output so long JSON (e.g. a full technology list) isn't truncated mid-array.
+        max_tokens = max(384, min(7000, budget))
     messages = [{"role": "system", "content": system},
                 {"role": "user", "content": prompt}]
     last = None

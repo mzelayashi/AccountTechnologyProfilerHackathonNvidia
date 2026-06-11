@@ -288,8 +288,10 @@ def generate_local(ask, customer: str, log=print) -> dict:
     if not text.strip():
         return {"ok": False, "error": "No trip reports filed for this customer yet.",
                 "text": "No trip reports to read yet."}
-    # Size chunks to the live context window: leave room for the prompt + reasoning + JSON answer.
-    chunk_chars = max(6000, int(nemotron.context_window() * 1.2))
+    # Keep chunks SMALL: Nemotron's <think> block runs ~4-5K tokens, so each chunk's JSON answer must
+    # stay short to finish within the 8K window. ~1500 chars/chunk → a short technology list that
+    # completes (closed JSON) instead of truncating mid-array. More passes, but each one parses.
+    chunk_chars = 1500
     chunks = _chunks(text, size=chunk_chars)
     log(f"Reading {n_files} trip report(s) in {len(chunks)} chunk(s) via local Nemotron "
         f"(map-reduce, {nemotron.context_window()}-token window)…")
