@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 50">
+  <!-- Large dark chassis -->
+  <rect x="4" y="4" width="72" height="42" rx="3" fill="#1a1a2e" stroke="#333366" stroke-width="1.5"/>
+  <!-- Top row of ports (12+) -->
+  <rect x="8" y="9" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="14" y="9" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="20" y="9" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="26" y="9" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="32" y="9" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="38" y="9" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="44" y="9" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="50" y="9" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="56" y="9" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="62" y="9" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="68" y="9" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <!-- Bottom row of ports -->
+  <rect x="8" y="18" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="14" y="18" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="20" y="18" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="26" y="18" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="32" y="18" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="38" y="18" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="44" y="18" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="50" y="18" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="56" y="18" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="62" y="18" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <rect x="68" y="18" width="4" height="5" rx="0.5" fill="#f39c12" stroke="#e67e22" stroke-width="0.3"/>
+  <!-- SFP+ uplink ports -->
+  <rect x="8" y="28" width="8" height="6" rx="1" fill="#2d3436" stroke="#636e72" stroke-width="0.5"/>
+  <rect x="19" y="28" width="8" height="6" rx="1" fill="#2d3436" stroke="#636e72" stroke-width="0.5"/>
+  <!-- Status LEDs -->
+  <circle cx="58" cy="38" r="1.5" fill="#00b894"/>
+  <circle cx="63" cy="38" r="1.5" fill="#00b894"/>
+  <circle cx="68" cy="38" r="1.5" fill="#fdcb6e"/>
+  <!-- Console port -->
+  <rect x="8" y="37" width="6" height="4" rx="0.5" fill="#0984e3" stroke="#74b9ff" stroke-width="0.3"/>
+</svg>

@@ -88,6 +88,31 @@ def list_generations(customer: str) -> list[dict]:
     return ([cur] if cur else []) + gens
 
 
+def delete_generation(customer: str, gen_id: str) -> dict:
+    """Soft-delete one snapshot: move its folder into vault/recyclebin/generations/ (nothing erased —
+    it just vanishes from the generations picker, exactly like deleting a customer). The live 'Current'
+    profile is the editable working copy and is NOT deletable here."""
+    import shutil
+    import config
+    from atlas.store import vault
+    if not gen_id or gen_id == "current":
+        return {"ok": False, "error": "The live Current profile can't be deleted."}
+    d = _gens_dir(customer) / gen_id
+    if not d.exists():
+        return {"ok": False, "error": "generation not found"}
+    dest = config.RECYCLEBIN_DIR / "generations" / f"{vault.slug(customer)}__{gen_id}"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    i = 2
+    while dest.exists():
+        dest = dest.with_name(f"{vault.slug(customer)}__{gen_id}-{i}")
+        i += 1
+    try:
+        shutil.move(str(d), str(dest))
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "error": f"could not move generation: {e}"}
+    return {"ok": True, "id": gen_id, "recycled_to": str(dest)}
+
+
 def load_generation(customer: str, gen_id: str = "") -> dict:
     """Return a generation's {entries, overview, contacts, topology_html}. '' or 'current' →
     the live flat files; otherwise the snapshot folder. Renders topology HTML on read."""

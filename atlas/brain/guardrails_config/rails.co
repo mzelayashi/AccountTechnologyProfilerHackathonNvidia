@@ -1,0 +1,4 @@
+# Override the refusal message the input rail emits when it blocks, so it carries a marker the app
+# detects ("scoped to your customer accounts"). No dialog flows / embeddings — input self-check only.
+define bot refuse to respond
+  "🛡️ I'm scoped to your customer accounts and technology research — I can't help with that here. Try asking about a customer, their tech stack, a briefing, or whether a product fits."

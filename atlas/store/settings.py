@@ -12,6 +12,13 @@ DEFAULTS = {
     "email_signature": "",          # appended under the report body in the draft
     "auto_email_trip_reports": False,
     "system_pin": "",               # 6-digit PIN required to delete a customer (anti-accident guard)
+    "guardrails_enabled": False,    # NeMo Guardrails input rail on the command box (off by default; fail-open)
+    "guardrails_topical": True,     # rail: keep the brain on-topic (account intel + tech research)
+    "guardrails_safety": True,      # rail: block unsafe / harmful requests
+    "guardrails_injection": True,   # rail: block prompt-injection / jailbreak attempts
+    "guardrails_strictness": "balanced",  # lenient | balanced | strict — how aggressively to refuse
+    "guardrails_blocked_terms": "",   # comma-separated words/phrases refused outright in the command box
+    "guardrails_blocked_domains": "",  # comma-separated domains the web-research agent must skip (e.g. reddit.com)
     "timezone": "America/New_York",  # IANA timezone the Cron Jobs scheduler fires in
     "show_chrome_windows": False,    # debug: launch the pool's Chrome on-screen (visible) instead of off-screen + minimized
     "gather_window_size": 5,         # days per parallel meeting-gather window (date-range trip-report jobs)

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 50">
+  <!-- Dark brown chassis -->
+  <rect x="4" y="4" width="72" height="42" rx="3" fill="#3e2723" stroke="#5d4037" stroke-width="1.5"/>
+  <!-- Tape/circular arrow symbol -->
+  <circle cx="32" cy="25" r="12" fill="none" stroke="#a1887f" stroke-width="2"/>
+  <circle cx="32" cy="25" r="5" fill="#4e342e" stroke="#8d6e63" stroke-width="1"/>
+  <!-- Arrow on circle -->
+  <path d="M32 13 L35 16 L29 16 Z" fill="#a1887f"/>
+  <!-- Drive bay slots (right side) -->
+  <rect x="52" y="10" width="5" height="12" rx="1" fill="#4e342e" stroke="#795548" stroke-width="0.6"/>
+  <rect x="60" y="10" width="5" height="12" rx="1" fill="#4e342e" stroke="#795548" stroke-width="0.6"/>
+  <rect x="52" y="26" width="5" height="12" rx="1" fill="#4e342e" stroke="#795548" stroke-width="0.6"/>
+  <rect x="60" y="26" width="5" height="12" rx="1" fill="#4e342e" stroke="#795548" stroke-width="0.6"/>
+  <!-- Status LEDs -->
+  <circle cx="68" cy="40" r="1.5" fill="#00b894"/>
+  <circle cx="63" cy="40" r="1.5" fill="#fdcb6e"/>
+</svg>

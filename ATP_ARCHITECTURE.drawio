@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-06-11T12:00:00.000Z" agent="ATP Architecture" version="22.1.0">
+  <diagram name="ATP Architecture" id="atp-architecture">
+    <mxGraphModel dx="1900" dy="1300" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1840" pageHeight="1240" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#0d1117;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="1840" height="1240" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="title" value="ATP — ACCOUNT TECHNOLOGY PROFILER · SYSTEM ARCHITECTURE &amp; AGENTIC FLOW" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="320" y="16" width="1200" height="38" as="geometry"/>
+        </mxCell>
+        <mxCell id="subtitle" value="Local NVIDIA Nemotron-Super-49B  ·  vLLM · 2× H100 (TP=2) · 8K ctx  ·  agentic Brain + multi-agent Brainwave + vault RAG + live web research + NeMo Guardrails  ·  NO API keys · NO cloud LLM · NO data egress" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontColor=#8b949e;" vertex="1" parent="1">
+          <mxGeometry x="220" y="54" width="1400" height="24" as="geometry"/>
+        </mxCell>
+
+        <!-- UI -->
+        <mxCell id="h-ui" value="USER INTERFACE (local, Chrome app-mode)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontStyle=1;fontColor=#58a6ff;" vertex="1" parent="1"><mxGeometry x="40" y="96" width="320" height="20" as="geometry"/></mxCell>
+        <mxCell id="ui" value="&lt;b&gt;ATP Console&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;atlas/web/index.html · run_atlas_linux.py&lt;/font&gt;&lt;hr&gt;&lt;font style=&quot;font-size:9px&quot;&gt;single-page console (no browser agents)&lt;br&gt;&lt;b&gt;Home:&lt;/b&gt; command box + starter chips&lt;br&gt;Working on (✕ cancel) · Recent Artifacts&lt;br&gt;Brainwave History · Customer Vault&lt;br&gt;Skills (SEdraw) · Settings · About&lt;br&gt;pull model: polls jobs/artifacts (no-store)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a365d;strokeColor=#3182ce;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="40" y="122" width="230" height="220" as="geometry"/>
+        </mxCell>
+
+        <!-- API -->
+        <mxCell id="h-api" value="HTTP API" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontStyle=1;fontColor=#56d4dd;" vertex="1" parent="1"><mxGeometry x="300" y="96" width="200" height="20" as="geometry"/></mxCell>
+        <mxCell id="server" value="&lt;b&gt;server.py&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;127.0.0.1:8080&lt;br&gt;POST /api/&amp;lt;method&amp;gt;&lt;/font&gt;" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#234e52;strokeColor=#319795;fontColor=#ffffff;rounded=1;size=0.2;align=left;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="300" y="122" width="180" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="api" value="&lt;b&gt;Api facade&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;atlas/web/api.py&lt;/font&gt;&lt;hr&gt;&lt;font style=&quot;font-size:9px&quot;&gt;command() → Brain&lt;br&gt;sedraw_* (network/vision/docx)&lt;br&gt;artifacts · brainwaves · customers&lt;br&gt;atp_* · generations&lt;br&gt;delete_* (PIN soft-delete)&lt;br&gt;engine_status&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#234e52;strokeColor=#319795;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="300" y="214" width="200" height="128" as="geometry"/>
+        </mxCell>
+
+        <!-- GUARDRAILS gate -->
+        <mxCell id="h-guard" value="🛡 GUARDRAILS (NeMo · off by default)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontStyle=1;fontColor=#f0883e;" vertex="1" parent="1"><mxGeometry x="300" y="372" width="340" height="20" as="geometry"/></mxCell>
+        <mxCell id="guard" value="&lt;b&gt;🛡 Input rail — check_input()&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;atlas/brain/guardrails.py&lt;/font&gt;&lt;hr&gt;&lt;font style=&quot;font-size:9px&quot;&gt;3 tiers: blocked-words denylist → NeMo&lt;br&gt;Guardrails self_check_input → native fallback&lt;br&gt;fail-open · ALLOW→Brain · BLOCK→refusal&lt;br&gt;levers + blocked words/domains&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#6b3410;strokeColor=#f0883e;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="300" y="398" width="200" height="140" as="geometry"/>
+        </mxCell>
+
+        <!-- THE BRAIN -->
+        <mxCell id="h-brain" value="★ THE BRAIN — Nemotron agentic orchestration" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontStyle=1;fontColor=#a371f7;" vertex="1" parent="1"><mxGeometry x="560" y="96" width="380" height="20" as="geometry"/></mxCell>
+        <mxCell id="route" value="&lt;b&gt;brain_route (Nemotron)&lt;/b&gt;  ★&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;nemotron_brain.route() · _brain_route_nemotron&lt;/font&gt;&lt;hr&gt;&lt;font style=&quot;font-size:9px&quot;&gt;one classify call → action:&lt;br&gt;run_skill · navigate · rag · research · brainwave&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#553c9a;strokeColor=#b794f4;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="560" y="122" width="280" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="rag" value="&lt;b&gt;RAG over the vault&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;rag_answer() — scope+terms → deterministic&lt;br&gt;scan (ATP · trip reports · vision/network ·&lt;br&gt;artifacts) → cited Nemotron synthesis&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#553c9a;strokeColor=#805ad5;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="560" y="262" width="280" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="skillground" value="&lt;b&gt;Skill grounding&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;ask = nemotron.complete(saved_context(customer)&lt;br&gt;+ prompt) → Copilot-era skills run grounded&lt;br&gt;on Nemotron with zero per-skill changes&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#44337a;strokeColor=#805ad5;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="560" y="382" width="280" height="95" as="geometry"/>
+        </mxCell>
+
+        <!-- BRAINWAVE -->
+        <mxCell id="h-bw" value="BRAINWAVE — parallel multi-agent fan-out + self-check" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontStyle=1;fontColor=#a371f7;" vertex="1" parent="1"><mxGeometry x="880" y="96" width="500" height="20" as="geometry"/></mxCell>
+        <mxCell id="bw" value="&lt;b&gt;brainwave job&lt;/b&gt;  ·  &lt;font style=&quot;font-size:9px&quot;&gt;is &amp;lt;product&amp;gt; a good fit for &amp;lt;customer&amp;gt;? → fans out 2 agents IN PARALLEL&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#553c9a;strokeColor=#b794f4;fontColor=#ffffff;align=left;verticalAlign=middle;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="880" y="122" width="500" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="bw-research" value="&lt;b&gt;🔎 web research&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;bw_research&lt;br&gt;live web search&lt;br&gt;→ Nemotron brief&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#44337a;strokeColor=#805ad5;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="880" y="186" width="160" height="96" as="geometry"/>
+        </mxCell>
+        <mxCell id="bw-cust" value="&lt;b&gt;🗂 customer infra&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;bw_cust_saved&lt;br&gt;Nemotron over the&lt;br&gt;customer's saved data&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#44337a;strokeColor=#805ad5;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="1055" y="186" width="165" height="96" as="geometry"/>
+        </mxCell>
+        <mxCell id="wave" value="&lt;b&gt;wave.md&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;merged context&lt;/font&gt;" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#3b2c66;strokeColor=#805ad5;fontColor=#ffffff;rounded=1;size=0.2;" vertex="1" parent="1">
+          <mxGeometry x="1235" y="186" width="145" height="96" as="geometry"/>
+        </mxCell>
+        <mxCell id="synth" value="&lt;b&gt;🧬 synthesis&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;grounded verdict (fit/risks/next step)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#553c9a;strokeColor=#b794f4;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="880" y="300" width="240" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="selfcheck" value="&lt;b&gt;🔎 self-check&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;fact-checks the verdict vs the evidence&lt;br&gt;→ flags unsupported claims + confidence&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#553c9a;strokeColor=#b794f4;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="1140" y="300" width="240" height="78" as="geometry"/>
+        </mxCell>
+
+        <!-- ENGINE -->
+        <mxCell id="h-engine" value="LOCAL INFERENCE ENGINE" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontStyle=1;fontColor=#39d353;" vertex="1" parent="1"><mxGeometry x="880" y="408" width="320" height="20" as="geometry"/></mxCell>
+        <mxCell id="nemclient" value="&lt;b&gt;nemotron.py&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;OpenAI-compatible client&lt;br&gt;strip &amp;lt;think&amp;gt; · temp 0.6/top_p 0.95&lt;br&gt;streaming + cancel · NIM-ready env&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#22543d;strokeColor=#38a169;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="880" y="434" width="230" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="vllm" value="&lt;b&gt;vLLM · Nemotron-49B&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;2× H100 NVL · TP=2&lt;br&gt;8192 ctx · :8000/v1&lt;br&gt;~82 GB resident / card&lt;/font&gt;" style="ellipse;shape=cloud;whiteSpace=wrap;html=1;fillColor=#1a4731;strokeColor=#39d353;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="1130" y="430" width="230" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="websearch" value="&lt;b&gt;🌐 websearch.py&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;DuckDuckGo (httpx+lxml)&lt;br&gt;blocked-domain filter · opt-in egress&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#22543d;strokeColor=#38a169;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="1400" y="186" width="200" height="96" as="geometry"/>
+        </mxCell>
+
+        <!-- JOBS -->
+        <mxCell id="h-jobs" value="JOB ENGINE" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontStyle=1;fontColor=#adbac7;" vertex="1" parent="1"><mxGeometry x="560" y="560" width="300" height="20" as="geometry"/></mxCell>
+        <mxCell id="jobmgr" value="&lt;b&gt;JobManager&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;atlas/jobs/manager.py&lt;/font&gt;&lt;hr&gt;&lt;font style=&quot;font-size:9px&quot;&gt;worker pool (POOL_SIZE=4) · submit(parent=)&lt;br&gt;recursive tree cancel → streaming abort&lt;br&gt;dependency chaining · vault/jobs.json&lt;br&gt;kinds: brain_route · brainwave · bw_* ·&lt;br&gt;web_research · docx_network · vision_generate ·&lt;br&gt;atp_generate · finalize_receipt&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4a5568;strokeColor=#718096;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="560" y="586" width="290" height="150" as="geometry"/>
+        </mxCell>
+
+        <!-- SKILLS / SEDRAW -->
+        <mxCell id="h-skills" value="SKILLS — SEdraw + Brain-dispatched" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontStyle=1;fontColor=#39d353;" vertex="1" parent="1"><mxGeometry x="880" y="560" width="320" height="20" as="geometry"/></mxCell>
+        <mxCell id="sedraw" value="&lt;b&gt;SEdraw (visible skills)&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;atlas/sedraw/*.py&lt;/font&gt;&lt;hr&gt;&lt;font style=&quot;font-size:9px&quot;&gt;🛰 Network Diagrams (xlsx intake → .drawio)&lt;br&gt;📄 Convert from DOCX → Nemotron → intake → map&lt;br&gt;🧭 Vision Boards (text → current/future .drawio)&lt;br&gt;full GUI editors · per-item 🗑 soft-delete&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#22543d;strokeColor=#38a169;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="880" y="586" width="300" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="hidden" value="&lt;b&gt;Brain-dispatched skills&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;hidden from the Skills page, run from the&lt;br&gt;command box (grounded on saved data):&lt;br&gt;strategic_briefing · account_360 · battlecard&lt;br&gt;whitespace · follow_up · environment_topology&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#22543d;strokeColor=#38a169;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="586" width="300" height="150" as="geometry"/>
+        </mxCell>
+
+        <!-- ATP -->
+        <mxCell id="h-atp" value="ATP — customer technology profile" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontStyle=1;fontColor=#e3a008;" vertex="1" parent="1"><mxGeometry x="560" y="760" width="320" height="20" as="geometry"/></mxCell>
+        <mxCell id="atp" value="&lt;b&gt;ATP subsystem&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;atlas/atp/*.py&lt;/font&gt;&lt;hr&gt;&lt;font style=&quot;font-size:9px&quot;&gt;extract.generate_local — map-reduce over trip&lt;br&gt;reports (chunk → TECH/OVERVIEW/CONTACTS → reduce)&lt;br&gt;generations (immutable snapshots · pin-and-merge)&lt;br&gt;data_library · profile_store · recency · topology_html&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#744210;strokeColor=#d69e2e;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="560" y="786" width="320" height="140" as="geometry"/>
+        </mxCell>
+
+        <!-- VAULT -->
+        <mxCell id="h-store" value="VAULT / STORES (local)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontStyle=1;fontColor=#f85149;" vertex="1" parent="1"><mxGeometry x="40" y="560" width="280" height="20" as="geometry"/></mxCell>
+        <mxCell id="st-cust" value="&lt;b&gt;customers/&amp;lt;slug&amp;gt;&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;trip_reports · ATP + generations&lt;br&gt;network/vision in+out · artifacts&lt;br&gt;(display names anonymized)&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#2d3748;strokeColor=#c53030;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="40" y="586" width="220" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="st-art" value="&lt;b&gt;artifacts.json&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;deliverables + brainwave receipts&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#2d3748;strokeColor=#c53030;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="40" y="700" width="220" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="st-set" value="&lt;b&gt;settings.json&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;PIN · timezone · guardrails levers&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#2d3748;strokeColor=#c53030;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="40" y="792" width="220" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="st-bin" value="&lt;b&gt;recyclebin/&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;PIN soft-deletes: customers · artifacts&lt;br&gt;vision · network · generations&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#2d3748;strokeColor=#c53030;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="40" y="884" width="220" height="86" as="geometry"/>
+        </mxCell>
+
+        <!-- GUARDRAILS PANEL (separate process) -->
+        <mxCell id="h-panel" value="GUARDRAILS CONTROL PANEL — separate process" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontStyle=1;fontColor=#56d4dd;" vertex="1" parent="1"><mxGeometry x="300" y="560" width="240" height="20" as="geometry"/></mxCell>
+        <mxCell id="panel" value="&lt;b&gt;🛡 Control Panel&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;guardrails_panel.py · :8090&lt;br&gt;own process — can't crash ATP&lt;br&gt;levers · live Test box&lt;br&gt;Recent blocks (4s poll)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0e4f59;strokeColor=#56d4dd;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="300" y="586" width="240" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="st-blocks" value="&lt;b&gt;guardrails_blocks.json&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;shared block log (cross-process)&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#2d3748;strokeColor=#c53030;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="300" y="760" width="240" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- OUTPUTS -->
+        <mxCell id="h-out" value="OUTPUTS" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontStyle=1;fontColor=#39d353;" vertex="1" parent="1"><mxGeometry x="1540" y="408" width="240" height="20" as="geometry"/></mxCell>
+        <mxCell id="out-art" value="&lt;b&gt;Artifacts browser&lt;/b&gt;&lt;hr&gt;&lt;font style=&quot;font-size:9px&quot;&gt;deliverables, diagrams,&lt;br&gt;briefings · search · file to&lt;br&gt;customer · 🗑 PIN soft-delete&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#22543d;strokeColor=#38a169;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="1540" y="434" width="240" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="out-bw" value="&lt;b&gt;🧠 Brainwave History&lt;/b&gt;&lt;hr&gt;&lt;font style=&quot;font-size:9px&quot;&gt;reasoning receipt per command:&lt;br&gt;decision + why · engine-aware agent&lt;br&gt;trace (Nemotron·2×H100) · rationale&lt;br&gt;· self-check&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#22543d;strokeColor=#38a169;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="1540" y="560" width="240" height="130" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== ARROWS ===== -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#3182ce;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="ui" target="server"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#319795;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="server" target="api"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" value="command()" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#f0883e;strokeWidth=2;endArrow=classic;fontColor=#f0883e;fontSize=9;" edge="1" parent="1" source="api" target="guard"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" value="ALLOW →" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#39d353;strokeWidth=2;endArrow=classic;fontColor=#56d364;fontSize=9;" edge="1" parent="1" source="guard" target="route"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" value="rag" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#a371f7;strokeWidth=2;endArrow=classic;fontColor=#b794f4;fontSize=9;" edge="1" parent="1" source="route" target="rag"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e6" value="brainwave" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#a371f7;strokeWidth=2;endArrow=classic;fontColor=#b794f4;fontSize=9;" edge="1" parent="1" source="route" target="bw"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e7" value="run_skill (grounded)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#a371f7;strokeWidth=2;endArrow=classic;fontColor=#b794f4;fontSize=9;" edge="1" parent="1" source="route" target="skillground"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- brainwave fan-out -->
+        <mxCell id="e8" value="∥" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b794f4;strokeWidth=2;endArrow=classic;fontColor=#b794f4;fontSize=12;" edge="1" parent="1" source="bw" target="bw-research"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e9" value="∥" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b794f4;strokeWidth=2;endArrow=classic;fontColor=#b794f4;fontSize=12;" edge="1" parent="1" source="bw" target="bw-cust"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b794f4;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="bw-research" target="wave"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b794f4;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="bw-cust" target="wave"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b794f4;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="wave" target="synth"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1000" y="292"/></Array></mxGeometry></mxCell>
+        <mxCell id="e13" value="verify" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b794f4;strokeWidth=2;endArrow=classic;fontColor=#b794f4;fontSize=9;" edge="1" parent="1" source="synth" target="selfcheck"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e14" value="live web" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#38a169;strokeWidth=2;endArrow=classic;dashed=1;fontColor=#56d364;fontSize=9;" edge="1" parent="1" source="bw-research" target="websearch"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- everything runs on the engine -->
+        <mxCell id="e15" value="jobs" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#718096;strokeWidth=2;endArrow=classic;dashed=1;fontColor=#8b949e;fontSize=9;" edge="1" parent="1" source="route" target="jobmgr"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e16" value="all inference" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#38a169;strokeWidth=2;endArrow=classic;dashed=1;fontColor=#56d364;fontSize=9;" edge="1" parent="1" source="jobmgr" target="nemclient"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#38a169;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="nemclient" target="vllm"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e18" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#38a169;strokeWidth=2;endArrow=classic;dashed=1;" edge="1" parent="1" source="synth" target="nemclient"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- skills + atp on engine -->
+        <mxCell id="e19" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#38a169;strokeWidth=2;endArrow=classic;dashed=1;" edge="1" parent="1" source="sedraw" target="nemclient"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e20" value="map-reduce" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#d69e2e;strokeWidth=2;endArrow=classic;dashed=1;fontColor=#e3a008;fontSize=9;" edge="1" parent="1" source="atp" target="nemclient"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- stores -->
+        <mxCell id="e21" value="scan (RAG)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#c53030;strokeWidth=2;endArrow=classic;startArrow=classic;fontColor=#f85149;fontSize=9;" edge="1" parent="1" source="rag" target="st-cust"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="520" y="312"/></Array></mxGeometry></mxCell>
+        <mxCell id="e22" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#c53030;strokeWidth=2;endArrow=classic;startArrow=classic;" edge="1" parent="1" source="atp" target="st-cust"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e23" value="reads levers" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#f0883e;strokeWidth=2;endArrow=classic;dashed=1;fontColor=#f0883e;fontSize=9;" edge="1" parent="1" source="st-set" target="guard"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e24" value="read/write levers" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#56d4dd;strokeWidth=2;endArrow=classic;startArrow=classic;dashed=1;fontColor=#56d4dd;fontSize=9;" edge="1" parent="1" source="panel" target="st-set"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e25" value="block log" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#56d4dd;strokeWidth=2;endArrow=classic;startArrow=classic;dashed=1;fontColor=#56d4dd;fontSize=9;" edge="1" parent="1" source="panel" target="st-blocks"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e26" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#c53030;strokeWidth=2;endArrow=classic;" edge="1" parent="1" source="guard" target="st-blocks"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="420" y="752"/></Array></mxGeometry></mxCell>
+
+        <!-- outputs -->
+        <mxCell id="e27" value="deliverable" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#38a169;strokeWidth=2;endArrow=classic;fontColor=#56d364;fontSize=9;" edge="1" parent="1" source="sedraw" target="out-art"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1660" y="660"/></Array></mxGeometry></mxCell>
+        <mxCell id="e28" value="receipt" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#38a169;strokeWidth=2;endArrow=classic;fontColor=#56d364;fontSize=9;" edge="1" parent="1" source="selfcheck" target="out-bw"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e29" value="every interaction" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#38a169;strokeWidth=2;endArrow=classic;dashed=1;fontColor=#56d364;fontSize=9;" edge="1" parent="1" source="route" target="out-bw"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1700" y="232"/></Array></mxGeometry></mxCell>
+
+        <!-- ===== LEGEND ===== -->
+        <mxCell id="legend-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#161b22;strokeColor=#30363d;opacity=95;" vertex="1" parent="1">
+          <mxGeometry x="900" y="786" width="900" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-title" value="&lt;b&gt;LEGEND&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;fontColor=#ffffff;" vertex="1" parent="1"><mxGeometry x="916" y="792" width="200" height="20" as="geometry"/></mxCell>
+        <mxCell id="lg1" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a365d;strokeColor=#3182ce;" vertex="1" parent="1"><mxGeometry x="916" y="822" width="18" height="13" as="geometry"/></mxCell>
+        <mxCell id="lg1t" value="UI" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#c9d1d9;" vertex="1" parent="1"><mxGeometry x="940" y="820" width="120" height="18" as="geometry"/></mxCell>
+        <mxCell id="lg2" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#234e52;strokeColor=#319795;" vertex="1" parent="1"><mxGeometry x="916" y="844" width="18" height="13" as="geometry"/></mxCell>
+        <mxCell id="lg2t" value="HTTP API" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#c9d1d9;" vertex="1" parent="1"><mxGeometry x="940" y="842" width="120" height="18" as="geometry"/></mxCell>
+        <mxCell id="lg3" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#553c9a;strokeColor=#b794f4;" vertex="1" parent="1"><mxGeometry x="916" y="866" width="18" height="13" as="geometry"/></mxCell>
+        <mxCell id="lg3t" value="The Brain + Brainwave agents ★" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#c9d1d9;" vertex="1" parent="1"><mxGeometry x="940" y="864" width="240" height="18" as="geometry"/></mxCell>
+        <mxCell id="lg4" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#22543d;strokeColor=#38a169;" vertex="1" parent="1"><mxGeometry x="916" y="888" width="18" height="13" as="geometry"/></mxCell>
+        <mxCell id="lg4t" value="Nemotron engine · skills · web · outputs" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#c9d1d9;" vertex="1" parent="1"><mxGeometry x="940" y="886" width="300" height="18" as="geometry"/></mxCell>
+        <mxCell id="lg5" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#6b3410;strokeColor=#f0883e;" vertex="1" parent="1"><mxGeometry x="1230" y="822" width="18" height="13" as="geometry"/></mxCell>
+        <mxCell id="lg5t" value="Guardrails rail · ATP (gold)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#c9d1d9;" vertex="1" parent="1"><mxGeometry x="1254" y="820" width="260" height="18" as="geometry"/></mxCell>
+        <mxCell id="lg6" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0e4f59;strokeColor=#56d4dd;" vertex="1" parent="1"><mxGeometry x="1230" y="844" width="18" height="13" as="geometry"/></mxCell>
+        <mxCell id="lg6t" value="Guardrails Control Panel (own process)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#c9d1d9;" vertex="1" parent="1"><mxGeometry x="1254" y="842" width="320" height="18" as="geometry"/></mxCell>
+        <mxCell id="lg7" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2d3748;strokeColor=#c53030;" vertex="1" parent="1"><mxGeometry x="1230" y="866" width="18" height="13" as="geometry"/></mxCell>
+        <mxCell id="lg7t" value="Vault stores · recyclebin (PIN soft-delete)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#c9d1d9;" vertex="1" parent="1"><mxGeometry x="1254" y="864" width="320" height="18" as="geometry"/></mxCell>
+        <mxCell id="lg8t" value="dashed = inference / secondary flow   ·   ∥ = runs in parallel   ·   ★ = agentic core" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#8b949e;" vertex="1" parent="1"><mxGeometry x="916" y="908" width="700" height="18" as="geometry"/></mxCell>
+
+        <mxCell id="footer" value="ATP — Account Technology Profiler  ·  2026-06-11  ·  local NVIDIA Nemotron-Super-49B on 2× H100 (vLLM, TP=2)  ·  agentic Brain + multi-agent Brainwave + vault RAG + live web research + NeMo Guardrails  ·  fully local · no API keys · NIM-ready" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#6e7681;" vertex="1" parent="1">
+          <mxGeometry x="120" y="1206" width="1600" height="20" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

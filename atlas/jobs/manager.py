@@ -22,6 +22,7 @@ from atlas.store import artifacts
 
 _JOBS_PATH = config.VAULT_DIR / "jobs.json"
 _ACTIVE = ("queued", "waiting", "running")
+_ENGINE_LOCAL = "local NVIDIA Nemotron-49B (vLLM · 2×H100, TP=2)"   # shown in receipts when Copilot is off
 
 
 @dataclasses.dataclass
@@ -42,6 +43,8 @@ class Job:
     result: dict | None = None
     error: str = ""
     cancel: bool = False    # set by JobManager.cancel() — the user ✕'d this job
+    parent: str | None = None                                   # the job that spawned this one
+    children: list = dataclasses.field(default_factory=list)    # sub-jobs this job fanned out
 
     def append(self, msg: str) -> None:
         self.log += str(msg) + "\n"
@@ -77,7 +80,8 @@ class JobManager:
 
     # ---- submission ----
     def submit(self, kind: str, ctx: dict | None = None, title: str = "",
-               after: list | None = None, icon: str = "", mode: str = "work") -> str:
+               after: list | None = None, icon: str = "", mode: str = "work",
+               parent: str | None = None) -> str:
         with self._mu:
             self._seq += 1
             jid = f"{int(time.time())}-{self._seq}"
@@ -85,9 +89,11 @@ class JobManager:
             job = Job(id=jid, kind=kind, ctx=ctx or {},
                       title=title or (sk.name if sk else kind),
                       icon=icon or (sk.icon if sk else ("🗓" if kind == "gather_day" else "•")),
-                      after=list(after or []), mode=mode)
+                      after=list(after or []), mode=mode, parent=parent)
             self._jobs[jid] = job
             self._order.append(jid)
+            if parent and parent in self._jobs:           # link into the job tree (for recursive cancel)
+                self._jobs[parent].children.append(jid)
             ready = all(self._is_settled(a) for a in job.after)
             job.status = "queued" if ready else "waiting"
         self._persist()
@@ -110,8 +116,31 @@ class JobManager:
             return sum(1 for j in self._jobs.values() if j.status in _ACTIVE)
 
     def cancel(self, jid: str) -> dict:
-        """Stop a job the user ✕'d in the Working-on bar. Queued/waiting → drop it before it runs;
-        running → force-close the Chrome it's driving so the worker unwinds promptly (interrupted)."""
+        """Stop a job the user ✕'d in the Working-on bar — AND its whole sub-tree. A brainwave/brain
+        job fans out child agents (and produces an in-progress artifact); cancelling it must close
+        everything. We walk the job + all active descendants and cancel each: queued/waiting are
+        dropped; running ones get the cancel signal (polled by streaming nemotron.complete to abort
+        mid-generation) plus, for any real Chrome session, request_stop() as before."""
+        with self._mu:
+            root = self._jobs.get(jid)
+            if not root:
+                return {"ok": False, "state": "missing"}
+            # BFS over the tree; cancel descendants first, then the root.
+            order, seen, frontier = [], {jid}, [jid]
+            while frontier:
+                cur = frontier.pop()
+                order.append(cur)
+                cj = self._jobs.get(cur)
+                for kid in (cj.children if cj else []):
+                    if kid not in seen:
+                        seen.add(kid)
+                        frontier.append(kid)
+            targets = list(reversed(order))             # children before parents
+        cancelled = [t for t in targets if self._cancel_one(t).get("ok")]
+        return {"ok": bool(cancelled), "state": "cancelled", "ids": cancelled}
+
+    def _cancel_one(self, jid: str) -> dict:
+        """Cancel a single job (the original per-job logic)."""
         with self._mu:
             j = self._jobs.get(jid)
             if not j or j.status not in _ACTIVE:
@@ -125,7 +154,8 @@ class JobManager:
             self._persist()
             self._release_waiters(jid)
             return {"ok": True, "state": "queued-cancelled"}
-        # running → force-stop the Chrome session it's on (worker flips it to interrupted when it unwinds)
+        # running → signal the cancel (streaming completions poll job.cancel and abort); also stop a
+        # real Chrome session if this job is driving one (no-op when Copilot is disabled).
         sess = next((s for s in self.pool.sessions if s.idx == sidx), None)
         if sess:
             try:
@@ -182,11 +212,36 @@ class JobManager:
 
         if job.kind == "atp_generate":
             from atlas.atp import extract
-            ask_all = lambda prompts: session.ask_chain_all(  # noqa: E731
-                prompts, on_log=job.append, mode=job.mode, accept=extract.looks_complete)
-            res = extract.generate(ask_all, job.ctx.get("customer", ""), job.append)
+            customer = job.ctx.get("customer", "")
+            import os
+            if os.getenv("ATLAS_COPILOT_DISABLED") == "1":
+                # Local Nemotron engine: map-reduce over the trip reports (no browser, no Copilot).
+                from atlas.engine import nemotron
+                ask = lambda p: nemotron.complete(p, on_log=job.append, should_cancel=lambda: job.cancel)  # noqa: E731
+                res = extract.generate_local(ask, customer, job.append)
+            else:
+                ask_all = lambda prompts: session.ask_chain_all(  # noqa: E731
+                    prompts, on_log=job.append, mode=job.mode, accept=extract.looks_complete)
+                res = extract.generate(ask_all, customer, job.append)
             return {"text": res.get("text") or res.get("error", "done"),
                     "files": [], "diagram": None, "data": None}
+
+        if job.kind == "vision_generate":
+            from pathlib import Path
+            from atlas.sedraw import service
+            res = service.vision_generate(job.ctx.get("customer", ""), job.ctx.get("current_text", ""),
+                                          job.ctx.get("future_text", ""), log=job.append)
+            if not res.get("ok"):
+                return {"text": res.get("error", "Vision generation failed."),
+                        "files": [], "diagram": None, "data": None}
+            files = [Path(res["drawio_path"])] if res.get("drawio_path") else []
+            diagram = Path(res["viewer_path"]).as_uri() if res.get("viewer_path") else None
+            text = res.get("text") or f"Vision board generated for {job.ctx.get('customer', '')}."
+            artifacts.add("vision_board", "Vision Board", "🧭",
+                          job.ctx.get("customer", "") or job.title, text, files, diagram, res, url="")
+            return {"text": text,
+                    "files": [{"name": p.name, "uri": p.as_uri()} for p in files],
+                    "diagram": diagram, "data": res, "url": ""}
 
         if job.kind == "brain_route":
             return self._brain_route(session, job)
@@ -211,15 +266,28 @@ class JobManager:
 
         if job.kind == "bw_research":
             from atlas.brain import brainwave as bw
-            txt = session.ask(bw.research_prompt(job.ctx.get("product", ""), job.ctx.get("question", "")),
-                              on_log=job.append, mode="web", accept=bw.substantial)
+            import os
+            prod, q = job.ctx.get("product", ""), job.ctx.get("question", "")
+            if os.getenv("ATLAS_COPILOT_DISABLED") == "1":   # local: live web search → Nemotron
+                from atlas.engine import nemotron, websearch
+                sources = websearch.research_brief(f"{prod} {q}".strip(), on_log=job.append)
+                txt = nemotron.complete(bw.research_prompt_web(prod, q, sources), on_log=job.append,
+                                        should_cancel=lambda: job.cancel)
+            else:
+                txt = session.ask(bw.research_prompt(prod, q),
+                                  on_log=job.append, mode="web", accept=bw.substantial)
             return {"text": txt, "files": [], "diagram": None, "data": None}
 
         if job.kind == "bw_cust_saved":         # analyze the customer's OWN saved data (Web, fast)
             from atlas.brain import brainwave as bw
+            import os
             cust, prod = job.ctx.get("customer", ""), job.ctx.get("product", "")
             q, saved = job.ctx.get("question", ""), job.ctx.get("saved", "")
-            if len(saved) <= 22000:              # fits one turn
+            if os.getenv("ATLAS_COPILOT_DISABLED") == "1":   # local Nemotron (saved data capped to 8K)
+                from atlas.engine import nemotron
+                txt = nemotron.complete(bw.saved_customer_prompt(cust, prod, q, (saved or "")[:6500]),
+                                        on_log=job.append, should_cancel=lambda: job.cancel)
+            elif len(saved) <= 22000:            # fits one turn
                 txt = session.ask(bw.saved_customer_prompt(cust, prod, q, saved),
                                   on_log=job.append, mode="web", accept=bw.substantial)
             else:                                # chunk ALL reports across one conversation, then ask
@@ -234,6 +302,34 @@ class JobManager:
                                                    job.ctx.get("question", "")),
                               on_log=job.append, mode="work", accept=bw.brief)   # may be short ("nothing new")
             return {"text": txt, "files": [], "diagram": None, "data": None}
+
+        if job.kind == "docx_network":            # Word .docx → Nemotron → network intake .xlsx → map
+            from pathlib import Path
+            from atlas.sedraw import service
+            res = service.convert_docx_network(job.ctx.get("customer", ""), job.ctx.get("filename", ""),
+                                               job.ctx.get("data_b64", ""), log=job.append,
+                                               should_cancel=lambda: job.cancel)
+            if not res.get("ok"):
+                return {"text": res.get("error", "DOCX conversion failed."), "ok": False,
+                        "files": [], "diagram": None, "data": None}
+            dpath = res.get("drawio_path") or ""
+            files = [Path(dpath)] if dpath and Path(dpath).exists() else []
+            artifacts.add("network_diagram", "Network Diagram", "🗺",
+                          job.ctx.get("customer", "") or job.title, res.get("text", ""),
+                          files, res.get("viewer_uri") or None, res, url="")
+            return res                              # frontend reads ok/viewer/drawio_uri/title
+
+        if job.kind == "web_research":            # external/web research agent (no customer) → cited brief
+            from atlas.brain import brainwave as bw
+            from atlas.engine import nemotron, websearch
+            topic = (job.ctx.get("topic") or "").strip()
+            job.append(f"🌐 Researching the web: {topic}…")
+            sources = websearch.research_brief(topic, on_log=job.append)
+            answer = nemotron.complete(bw.web_research_prompt(topic, sources),
+                                       on_log=job.append, should_cancel=lambda: job.cancel)
+            answer = (answer or "").strip() or f"Could not produce a research brief for **{topic}**."
+            artifacts.add("web_research", "Web Research", "🌐", topic[:80], answer, [], None, None, url="")
+            return {"text": answer, "files": [], "diagram": None, "data": None}
 
         if job.kind == "chat_continue":
             url = job.ctx.get("url") or ""
@@ -251,6 +347,18 @@ class JobManager:
         sk = get_skill(job.kind)
         if not sk:
             raise ValueError(f"unknown job kind: {job.kind}")
+        # Copilot disabled → ground the (Copilot-era) skill on local Nemotron + the customer's saved data.
+        import os
+        if os.getenv("ATLAS_COPILOT_DISABLED") == "1":
+            from atlas.engine import nemotron
+            from atlas.brain import nemotron_brain as nb
+            _cust = (job.ctx.get("account") or job.ctx.get("customer") or "").strip()
+            _prefix = nb.saved_context(_cust) if _cust else ""
+            if _cust and not _prefix:
+                job.append(f"⚠ No saved data found for {_cust} — answering from general knowledge.")
+            _cx = lambda: job.cancel                                                     # noqa: E731
+            ask = lambda p: nemotron.complete(_prefix + p, on_log=job.append, should_cancel=_cx)  # noqa: E731
+            ask_chain = lambda ps: [nemotron.complete(_prefix + p, on_log=job.append, should_cancel=_cx) for p in ps]  # noqa: E731
         res = sk.run(job.ctx, ask, job.append)
         # M365 rewrites the URL to /chat/conversation/<id> a few seconds after the answer.
         url = session.current_url(wait_conversation=True)  # for "continue this chat"
@@ -280,8 +388,14 @@ class JobManager:
         return [k for k in kids if k]
 
     @staticmethod
+    def _local() -> bool:
+        """True when running on the local Nemotron engine (Copilot/Chrome disabled)."""
+        import os
+        return os.getenv("ATLAS_COPILOT_DISABLED") == "1"
+
+    @staticmethod
     def _decision_line(decision: dict | None) -> str:
-        """One-line 'Brain logic': what was decided and why, and that classification ran on Copilot Web."""
+        """One-line 'Brain logic': what was decided and why, and how it was classified."""
         d = decision or {}
         action = d.get("action") or "answer"
         skill = d.get("skill") or ""
@@ -293,7 +407,9 @@ class JobManager:
             bits.append(f"{len(d['items'])} target(s)")
         head = " · ".join(bits)
         tail = (f" — {why}" if why else "")
-        grounding = d.get("grounding") or "classified on Copilot **Web**, grounded on the capability manifest"
+        default_grounding = ("routed on **local Nemotron**" if JobManager._local()
+                             else "classified on Copilot **Web**, grounded on the capability manifest")
+        grounding = d.get("grounding") or default_grounding
         return f"{head}{tail}  \n_({grounding})_"
 
     def _receipt_body(self, command: str, decision: dict | None, result: dict, *, pending: bool) -> str:
@@ -301,13 +417,17 @@ class JobManager:
         result text. The finalizer later appends the agent/Chrome trace + rationale + technology."""
         rcpt = result.get("text", "")
         kids = self._child_ids(result)
-        tech = ("Copilot via the Selenium browser pool" if kids
-                else "answered directly — in-memory capability manifest, **no Copilot agents (0 Chrome instances)**")
+        if self._local():
+            tech = (f"{_ENGINE_LOCAL} · {len(kids)} agent job(s)" if kids
+                    else f"answered directly on {_ENGINE_LOCAL} — in-memory capability manifest")
+        else:
+            tech = ("Copilot via the Selenium browser pool" if kids
+                    else "answered directly — in-memory capability manifest, **no Copilot agents (0 Chrome instances)**")
         parts = ["🧠 **Reasoning receipt**", f"**You asked:** {command}" if command else "",
                  f"**Brain logic:** {self._decision_line(decision)}",
                  f"**Technology:** {tech}", "", rcpt]
         if pending and kids:
-            parts.append("\n_⏳ Agent trace, Chrome instances, and rationale fill in when the work completes._")
+            parts.append("\n_⏳ Agent trace and rationale fill in when the work completes._")
         return "\n\n".join(p for p in parts if p)
 
     def _log_brainwave(self, command: str, result: dict, decision: dict | None = None) -> dict:
@@ -329,17 +449,25 @@ class JobManager:
         return result
 
     def _trace_rows(self, job_ids: list[str]) -> str:
-        """A markdown trace table over a set of jobs: agent/job · Copilot mode · Chrome instance · output."""
-        rows = ["| Agent / job | Copilot mode | Chrome | Output |", "|---|---|---|---|"]
+        """A markdown trace table over a set of jobs. Local: agent · engine · output.
+        Copilot: agent · Copilot mode · Chrome instance · output."""
+        local = self._local()
+        if local:
+            rows = ["| Agent / job | Engine | Output |", "|---|---|---|"]
+        else:
+            rows = ["| Agent / job | Copilot mode | Chrome | Output |", "|---|---|---|---|"]
         for jid in job_ids:
             j = self._jobs.get(jid)
             if not j:
                 continue
-            inst = f"#{j.session_idx}" if j.session_idx is not None else "—"
             out = (j.result or {}).get("text", "") if j.result else ""
             outdesc = f"{len(out):,} chars" if out else (j.status or "—")
-            mode = j.mode or "—"
-            rows.append(f"| {j.icon} {j.kind} | {mode} | {inst} | {outdesc} {'✓' if j.status=='done' else ''} |")
+            ok = "✓" if j.status == "done" else ""
+            if local:
+                rows.append(f"| {j.icon} {j.kind} | Nemotron-49B (vLLM·2×H100) | {outdesc} {ok} |")
+            else:
+                inst = f"#{j.session_idx}" if j.session_idx is not None else "—"
+                rows.append(f"| {j.icon} {j.kind} | {j.mode or '—'} | {inst} | {outdesc} {ok} |")
         return "\n".join(rows)
 
     def _finalize_receipt(self, session, job: Job) -> dict:
@@ -366,7 +494,15 @@ class JobManager:
                           f"right answer, and (if it names people/resources/options) why the top pick "
                           f"fits. Be specific; do not restate the whole result.\n\n=== RESULT ===\n"
                           f"{deliverable[:6000]}")
-                rationale = (session.ask(prompt, on_log=job.append, mode="web", accept=bw.brief) or "").strip()
+                if self._local():
+                    from atlas.engine import nemotron
+                    rationale = (nemotron.complete(prompt, on_log=job.append, max_tokens=1500,
+                                                   should_cancel=lambda: job.cancel) or "").strip()
+                    # belt-and-suspenders: drop any <think> block even if truncated (no closing tag)
+                    import re as _re
+                    rationale = _re.sub(r"<think>.*?(?:</think>|$)", "", rationale, flags=_re.DOTALL).strip()
+                else:
+                    rationale = (session.ask(prompt, on_log=job.append, mode="web", accept=bw.brief) or "").strip()
 
         # Technology footprint from the actual jobs.
         insts, modes = set(), set()
@@ -377,13 +513,18 @@ class JobManager:
                     insts.add(j.session_idx)
                 if j.mode:
                     modes.add(j.mode)
-        tech = (f"M365 Copilot via the Selenium browser pool · {len(child_ids)} job(s) · "
-                f"mode(s): {', '.join(sorted(modes)) or '—'} · Chrome instance(s): "
-                f"{', '.join('#'+str(i) for i in sorted(insts)) or '—'}")
+        if self._local():
+            tech = f"{_ENGINE_LOCAL} · {len(child_ids)} agent job(s)"
+            caption = "(agents · engine · output)"
+        else:
+            tech = (f"M365 Copilot via the Selenium browser pool · {len(child_ids)} job(s) · "
+                    f"mode(s): {', '.join(sorted(modes)) or '—'} · Chrome instance(s): "
+                    f"{', '.join('#'+str(i) for i in sorted(insts)) or '—'}")
+            caption = "(agents · Copilot mode · Chrome instance · output)"
 
         body = (f"🧠 **Reasoning receipt**\n\n**You asked:** {command}\n\n"
                 f"**Brain logic:** {self._decision_line(decision)}\n\n"
-                f"**How it was worked out** (agents · Copilot mode · Chrome instance · output):\n\n"
+                f"**How it was worked out** {caption}:\n\n"
                 f"{self._trace_rows(child_ids)}\n\n")
         if rationale:
             body += f"**Rationale / logic of the answer:**\n\n{rationale}\n\n"
@@ -408,6 +549,11 @@ class JobManager:
                                        {"action": "capabilities", "grounding": "answered from the "
                                         "in-memory capability manifest — no Copilot round-trip",
                                         "explanation": "A question about ATLAS itself."})
+
+        # Copilot disabled → the Nemotron Brain: route to a skill / navigate / RAG over the vault.
+        import os
+        if os.getenv("ATLAS_COPILOT_DISABLED") == "1":
+            return self._brain_route_nemotron(job, text)
 
         # Fast-path: "trip reports for all/each of <day>'s meetings" → one trip_report per meeting.
         _day = brain_router.meeting_trip_reports_day(text)
@@ -485,6 +631,99 @@ class JobManager:
                                           "files": [], "diagram": None, "data": None},
                                    {"action": "keyword fallback", "explanation": f"routed → {routed}",
                                     "grounding": "LLM classify unavailable — deterministic keyword router"})
+
+    def _brain_route_nemotron(self, job: Job, text: str) -> dict:
+        """The Nemotron Brain (Copilot disabled): launch a customer skill, send the user to an
+        interactive skill, or answer a question with RAG over the Customer Vault — all local."""
+        from atlas.brain import nemotron_brain as nb
+        from atlas.engine import nemotron
+        _cx = lambda: job.cancel                                                          # noqa: E731
+        job.append("🧠 Routing with Nemotron…")
+        try:
+            d = nb.route(text, on_log=job.append, should_cancel=_cx)
+        except nemotron.Cancelled:
+            raise
+        except Exception as e:  # noqa: BLE001
+            job.append(f"🧠 route failed ({e}); falling back to RAG.")
+            d = {"action": "rag", "question": text}
+        action = d.get("action")
+
+        if action == "navigate":
+            label = nb.NAVIGATE.get(d.get("skill"), "Skills")
+            return self._log_brainwave(text, {
+                "text": f"🧭 **{label}** needs a few inputs from you. Open **Skills → {label}** and "
+                        f"follow the prompts.", "files": [], "diagram": None, "data": None},
+                {"action": "navigate", "skill": d.get("skill"),
+                 "grounding": "routed by **Nemotron** (local) — interactive skill",
+                 "explanation": f"{label} requires interactive input"})
+
+        if action == "research" and (d.get("topic") or "").strip():
+            topic = d["topic"].strip()
+            child = self.submit("web_research", {"topic": topic},
+                                title=f"🌐 Research — {topic}"[:60], icon="🌐", mode="web", parent=job.id)
+            return self._log_brainwave(text, {
+                "text": f"🌐 Researching **{topic}** on the web — the brief will appear in Artifacts "
+                        f"(job `{child}`).",
+                "child": child, "files": [], "diagram": None, "data": None},
+                {"action": "research",
+                 "grounding": "routed by **Nemotron** (local) — live web-research agent",
+                 "explanation": f"web research: {topic}"})
+
+        if action == "brainwave" and (d.get("product") or "").strip():
+            from atlas.brain import brainwave as bw
+            product = d["product"].strip()
+            customer = (d.get("customer") or "").strip()
+            resolved = bw.resolve_customer(customer) or customer
+            if not resolved:
+                return self._log_brainwave(text, {
+                    "text": f"🧠 I can run a multi-agent **brainwave** on **{product}**, but I need a "
+                            f"customer to evaluate it for. Try \"is {product} a good fit for <customer>?\".",
+                    "files": [], "diagram": None, "data": None},
+                    {"action": "brainwave", "grounding": "routed by **Nemotron** (local)",
+                     "explanation": "missing customer"})
+            ph = artifacts.add("brainwave", "Brainwave", "🧠", f"{product} for {resolved}"[:80],
+                               f"**You asked:** {text}\n\n🧠 Brainwave running — 2 agents in parallel "
+                               f"(🔎 live web research on **{product}** ‖ 🗂 **{resolved}**'s "
+                               f"infrastructure), then synthesis + a self-check…", [], None, None)
+            child = self.submit("brainwave", {"product": product, "customer": resolved,
+                                              "question": text, "art_id": ph["id"]},
+                                title=f"🧠 {product} for {resolved}", icon="🧠", mode="web",
+                                parent=job.id)
+            return {"text": f"🧠 Starting a multi-agent **brainwave**: is **{product}** a good fit for "
+                            f"**{resolved}**? Fanning out 🔎 live web research ‖ 🗂 infrastructure "
+                            f"analysis → synthesis → self-check. See job `{child}`; it lands in "
+                            f"**Brainwave History**.",
+                    "child": child, "files": [], "diagram": None, "data": None}
+
+        if action == "run_skill" and d.get("skill"):
+            skill = d["skill"]
+            customer = (d.get("customer") or "").strip()
+            nice = skill.replace("_", " ")
+            if not customer:
+                return self._log_brainwave(text, {
+                    "text": f"🧠 I can run **{nice}**, but I need a customer. Try \"{nice} for <customer>\".",
+                    "files": [], "diagram": None, "data": None},
+                    {"action": "run_skill", "skill": skill,
+                     "grounding": "routed by **Nemotron** (local)", "explanation": "missing customer"})
+            child = self.submit(skill, {"account": customer, "customer": customer},
+                                title=f"{nice.title()} — {customer}", mode="work", parent=job.id)
+            return self._log_brainwave(text, {
+                "text": f"🧠 Running **{nice}** for **{customer}** on Nemotron — the deliverable will "
+                        f"appear in Artifacts (job `{child}`).",
+                "child": child, "files": [], "diagram": None, "data": None},
+                {"action": "run_skill", "skill": skill,
+                 "grounding": "routed by **Nemotron** (local); grounded on the customer's saved vault data",
+                 "explanation": f"run {nice} for {customer}"})
+
+        # default: RAG over the Customer Vault
+        job.append("🧠 Searching the Customer Vault…")
+        res = nb.rag_answer(d.get("question") or text, on_log=job.append, should_cancel=_cx)
+        return self._log_brainwave(text, {
+            "text": res.get("text", ""), "files": [], "diagram": None, "data": None},
+            {"action": "rag",
+             "grounding": f"**Nemotron** RAG over the vault — searched {res.get('searched', '?')} "
+                          f"customer(s), {res.get('matches', '?')} match(es)",
+             "explanation": "answered from the Customer Vault"})
 
     def _answer_capabilities(self, text: str) -> dict:
         """Answer a 'what can ATLAS do / what are your skills' question from the manifest."""
@@ -878,6 +1117,9 @@ class JobManager:
         """Fan out a Web product-research sub-agent ‖ a Work customer-analysis sub-agent, merge their
         outputs into an ephemeral brainwave file, then synthesize a grounded verdict on this thread
         and save it as a `brainwave` artifact."""
+        import os
+        if os.getenv("ATLAS_COPILOT_DISABLED") == "1":
+            return self._brainwave_nemotron(session, job)
         from atlas.brain import brainwave as bw
         product = (job.ctx.get("product") or "").strip()
         cname = (job.ctx.get("customer") or "").strip()
@@ -963,6 +1205,130 @@ class JobManager:
                 artifacts.update(art_id, customer=resolved)
         return {"text": trace, "files": [wave_file],
                 "diagram": None, "data": None, "url": url, "artifact_id": art_id}
+
+    def _brainwave_nemotron(self, session, job: Job) -> dict:
+        """Local-Nemotron Brainwave: fan out 2 parallel agent jobs — 🔎 live-web product research ‖
+        🗂 customer-infrastructure analysis — merge into wave.md, synthesize a verdict (3rd agent),
+        then self-check the verdict against the evidence (4th agent), and save the whole audit
+        receipt (parallel-agent trace + verdict + self-check) as a `brainwave` artifact."""
+        from atlas.brain import brainwave as bw
+        from atlas.engine import nemotron
+        from atlas.engine.extract import extract_json
+        product = (job.ctx.get("product") or "").strip()
+        cname = (job.ctx.get("customer") or "").strip()
+        question = job.ctx.get("question") or job.title
+        resolved = bw.resolve_customer(cname) or cname
+        is_known = bool(bw.resolve_customer(cname))
+
+        saved_text, n_used, n_total = bw.customer_saved_text(resolved, cap=6500) if is_known else ("", 0, 0)
+        job.append(f"🧠 Brainwave (Nemotron): is “{product}” a good fit for {resolved}?")
+        job.append(f"   Loaded {resolved}'s saved data: {n_used}/{n_total} trip report(s) + ATP profile "
+                   f"({len(saved_text):,} chars)." if saved_text
+                   else f"   No saved trip reports/profile for {resolved}; research only.")
+
+        # Step 1: two agents in parallel (each a real job → distinct pool worker / Nemotron request).
+        # parent=job.id links them into the tree so the ✕ on this brainwave cancels them too.
+        rid = self.submit("bw_research", {"product": product, "question": question},
+                          title=f"🔎 Web research — {product}", icon="🔎", mode="web", parent=job.id)
+        sid = self.submit("bw_cust_saved", {"customer": resolved, "product": product,
+                                            "question": question, "saved": saved_text},
+                          title=f"🗂 {resolved} infrastructure", icon="🗂", mode="web", parent=job.id)
+        job.append(f"   Fanned out 2 agents IN PARALLEL: 🔎 web research {rid} ‖ 🗂 customer analysis "
+                   f"{sid}. Waiting…")
+
+        deadline = time.time() + 600
+        _settled = ("done", "error", "interrupted")
+        while time.time() < deadline:
+            if job.cancel:
+                break
+            js = [self._jobs.get(x) for x in (rid, sid)]
+            if all(j and j.status in _settled for j in js):
+                break
+            time.sleep(2)
+
+        if job.cancel:                            # ✕ pressed — the sub-agents are being cancelled too
+            art_id = job.ctx.get("art_id")
+            if art_id and artifacts.get(art_id):
+                artifacts.update(art_id, text=f"⏹ **Brainwave cancelled** — *{product}* for "
+                                               f"*{resolved}* was stopped by the user before it finished.")
+            job.append("⏹ Brainwave cancelled — sub-agents stopped, no synthesis run.")
+            return {"text": "⏹ Brainwave cancelled.", "files": [], "diagram": None, "data": None}
+
+        def _txt(jid):
+            j = self._jobs.get(jid)
+            return (j.result or {}).get("text", "") if (j and j.result) else ""
+        research, saved = _txt(rid), _txt(sid)
+        job.append(f"   research {len(research):,} ‖ analysis {len(saved):,} chars. Synthesizing…")
+
+        wave_dir = config.VAULT_DIR / "brain" / "brainwaves" / job.id
+        wave_dir.mkdir(parents=True, exist_ok=True)
+        wave = (f"# Brainwave: {question}\n\n## Live web research — {product}\n{research}\n\n"
+                f"## {resolved} — infrastructure (from saved trip reports/profile)\n{saved}\n")
+        (wave_dir / "wave.md").write_text(wave, encoding="utf-8")
+
+        # Step 2: synthesis (3rd agent).
+        _cx = lambda: job.cancel                                                          # noqa: E731
+        synth = nemotron.complete(bw.synth_prompt_local(product, resolved, question, research, saved),
+                                  on_log=job.append, should_cancel=_cx)
+        synth = (synth or "").strip() or "_Synthesis did not complete — see wave.md._"
+
+        # Step 3: self-check (4th agent) — the brain audits its own verdict against the evidence.
+        job.append("   🔎 Self-check: auditing the verdict against the evidence…")
+        chk, parsed = {}, False
+        try:                                  # generous budget — Nemotron's <think> precedes the JSON
+            chk = extract_json(nemotron.complete(
+                bw.verify_prompt(product, resolved, synth, research, saved),
+                on_log=job.append, max_tokens=1600, should_cancel=_cx)) or {}
+            parsed = isinstance(chk, dict) and ("consistent" in chk or "issues" in chk)
+        except Exception as e:  # noqa: BLE001
+            job.append(f"   self-check error ({e}).")
+        conf = (chk.get("confidence") or ("—" if not parsed else "medium"))
+        issues = [str(i) for i in (chk.get("issues") or []) if str(i).strip()]
+        consistent = bool(chk.get("consistent", True)) and not issues
+        if not parsed:                        # don't masquerade a failed parse as "consistent"
+            head = "❔ Self-check inconclusive (verifier output unparseable)"
+        elif consistent:
+            head = "✅ Verdict consistent with the evidence"
+        else:
+            head = "⚠ Issues flagged"
+        note = (chk.get("note") or "").strip()
+        check_md = f"## 🔎 Self-check (brain verification)\n{head} · confidence: **{conf}**\n"
+        if note:
+            check_md += f"\n_{note}_\n"
+        if issues:
+            check_md += "\n" + "\n".join(f"- ⚠ {i}" for i in issues[:6]) + "\n"
+        check_status = ("inconclusive" if not parsed else
+                        "consistent" if consistent else f"{len(issues)} issue(s)")
+
+        # Audit receipt: the parallel-agent trace + verdict + self-check.
+        ok = "✓"
+        srcnote = (f"{n_used}/{n_total} reports + ATP" if saved_text else "no saved data")
+        eng = "Nemotron-49B (vLLM · 2×H100 TP=2)"
+        trace = (
+            f"# 🧠 Brainwave — {product} for {resolved}\n\n"
+            f"**How the brain worked this out** (Rule 1: the customer's saved data comes first):\n\n"
+            f"| Step | Agent | Engine | Output |\n"
+            f"|---|---|---|---|\n"
+            f"| 1 ‖ | 🔎 Live web research — {product} | {eng} + 🌐 web | {len(research):,} chars {ok if research else '—'} |\n"
+            f"| 1 ‖ | 🗂 {resolved} infrastructure ({srcnote}) | {eng} | {len(saved):,} chars {ok if saved else '—'} |\n"
+            f"| 2 | 🧬 Synthesis (verdict) | {eng} | verdict ↓ |\n"
+            f"| 3 | 🔎 Self-check (verification) | {eng} | {check_status} ({conf}) |\n\n"
+            f"The two step-1 agents ran **in parallel** (‖). Full detail is saved in `wave.md`.\n\n"
+            f"---\n\n{synth}\n\n{check_md}")
+
+        wave_file = {"name": "wave.md", "uri": (wave_dir / "wave.md").as_uri()}
+        art_id = job.ctx.get("art_id")
+        if art_id and artifacts.get(art_id):
+            artifacts.update(art_id, text=trace, files=[wave_file],
+                             customer=(resolved if is_known else ""))
+        else:
+            rec = artifacts.add("brainwave", "Brainwave", "🧠", f"{product} for {resolved}"[:80], trace,
+                                [wave_dir / "wave.md"], None, None, url="")
+            art_id = rec["id"]
+            if is_known:
+                artifacts.update(art_id, customer=resolved)
+        return {"text": trace, "files": [wave_file],
+                "diagram": None, "data": None, "url": "", "artifact_id": art_id}
 
     # ---- dependency helpers ----
     def _is_done(self, jid: str) -> bool:

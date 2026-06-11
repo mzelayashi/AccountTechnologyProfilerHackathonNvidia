@@ -6,12 +6,23 @@ detection that skips the "Lining things up…" loading placeholders. No API key/
 """
 from __future__ import annotations
 
+import os
 import re
 import threading
 import time
 from typing import Callable
 
 import config
+
+# Temporary kill-switch (set by the Linux launcher run_atlas_linux.py). When on, ATLAS never
+# launches a Chrome/Copilot session — every inference call returns a stub instead. This is the
+# seam where the local Nemotron engine will plug in (see NEMOTRON_ARCHITECTURE.md).
+_ENGINE_DISABLED_MSG = ("⚙️ The Copilot/Chrome engine is disabled on this machine — the Nemotron "
+                        "engine will replace it. No browser was opened.")
+
+
+def _engine_disabled() -> bool:
+    return os.getenv("ATLAS_COPILOT_DISABLED") == "1"
 
 # Proven selectors (validated live against m365.cloud.microsoft/chat).
 _INPUT_SELECTORS = ['[role="textbox"]', 'div[contenteditable="true"]', "textarea"]
@@ -125,6 +136,8 @@ class Session:
 
     # ---- lifecycle ----
     def _chrome(self):
+        if _engine_disabled():            # hard backstop — no browser may ever launch while disabled
+            raise RuntimeError("Copilot/Chrome engine is disabled (ATLAS_COPILOT_DISABLED=1)")
         from selenium import webdriver
         from selenium.webdriver.chrome.options import Options
 
@@ -289,6 +302,9 @@ class Session:
     # ---- inference ----
     def ask(self, prompt: str, on_log: Callable[[str], None] = print, timeout: int = 420,
             mode: str = "work", accept=None) -> str:
+        if _engine_disabled():
+            on_log(_ENGINE_DISABLED_MSG)
+            return _ENGINE_DISABLED_MSG
         with self._lock:
             driver = self._ready(on_log)
             self._set_mode(driver, mode, on_log)
@@ -299,6 +315,9 @@ class Session:
         """Run several prompts as sequential turns in ONE Copilot conversation. Collects EVERY
         turn's answer and returns the LAST non-refusal, non-empty one — so a Copilot guardrail
         refusal on a later turn can never bury the real data from an earlier turn."""
+        if _engine_disabled():
+            on_log(_ENGINE_DISABLED_MSG)
+            return _ENGINE_DISABLED_MSG
         with self._lock:
             driver = self._ready(on_log)  # one window + New chat for the whole chain
             self._set_mode(driver, mode, on_log)
@@ -318,6 +337,9 @@ class Session:
         """Like ask_chain, but returns EVERY turn's answer (refusals → "") so a chunked feed +
         several extraction turns over the accumulated context can each be read. Used by the ATP
         generator: feed ~20K-char trip-report chunks, then ask for technologies/overview/contacts."""
+        if _engine_disabled():
+            on_log(_ENGINE_DISABLED_MSG)
+            return ["" for _ in prompts]
         with self._lock:
             driver = self._ready(on_log)
             self._set_mode(driver, mode, on_log)
@@ -332,6 +354,9 @@ class Session:
                timeout: int = 420, mode: str = "work") -> str:
         """Resume an EXISTING Copilot conversation: navigate the driver to its URL (loading the
         prior context), then ask a follow-up turn. Used to continue a saved chat artifact."""
+        if _engine_disabled():
+            on_log(_ENGINE_DISABLED_MSG)
+            return _ENGINE_DISABLED_MSG
         with self._lock:
             driver = self._ensure_driver(on_log)  # NO new chat — we navigate to the saved thread
             on_log("Resuming the saved conversation…")

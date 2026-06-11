@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 50">
+  <rect x="2" y="8" width="76" height="34" rx="3" fill="#00838f" stroke="#00acc1" stroke-width="1.5"/>
+  <path d="M28 18 Q34 10 40 18 Q46 10 52 18" fill="none" stroke="#e0f7fa" stroke-width="2" stroke-linecap="round"/>
+  <path d="M30 22 Q37 15 44 22 Q50 15 50 22" fill="none" stroke="#e0f7fa" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="18" y1="30" x2="30" y2="30" stroke="#e0f7fa" stroke-width="1.5"/>
+  <polygon points="28,27 33,30 28,33" fill="#e0f7fa"/>
+  <line x1="50" y1="30" x2="62" y2="30" stroke="#e0f7fa" stroke-width="1.5"/>
+  <polygon points="52,27 47,30 52,33" fill="#e0f7fa"/>
+  <polygon points="60,27 65,30 60,33" fill="#e0f7fa"/>
+  <rect x="10" y="27" width="8" height="8" rx="1" fill="#004d40" stroke="#e0f7fa" stroke-width="0.5"/>
+  <rect x="62" y="27" width="8" height="8" rx="1" fill="#004d40" stroke="#e0f7fa" stroke-width="0.5"/>
+  <text x="40" y="40" font-family="Arial,sans-serif" font-size="6" font-weight="bold" fill="#e0f7fa" text-anchor="middle">SD-WAN</text>
+</svg>

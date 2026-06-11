@@ -6,6 +6,7 @@ from . import (  # noqa: F401  (register on import)
     knowledge_drop,
     more_skills,
     peopleresources,
+    sedraw,
     strategic_briefing,
     trip_report,
 )

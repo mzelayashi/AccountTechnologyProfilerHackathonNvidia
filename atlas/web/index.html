@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>SHI ATLAS</title>
+<title>Account Technology Profiler</title>
 <style>
 :root{
   --bg:#080b11; --panel:#0f1620; --panel2:#0c121b; --line:#1d2735;
@@ -66,7 +66,7 @@ a{color:inherit;text-decoration:none}
 .jchip .ji{font-size:13px}
 .jchip .jx{margin-left:4px;color:#7d8a98;font-size:15px;line-height:1;font-weight:700;padding:0 2px;border-radius:5px;cursor:pointer}
 .jchip .jx:hover{color:#ff6b6b;background:#3a1518}
-.cols{display:grid;grid-template-columns:300px 1fr 320px;gap:14px;flex:1;min-height:0}
+.cols{display:grid;grid-template-columns:1fr 320px;gap:14px;flex:1;min-height:0}
 .panel{background:linear-gradient(180deg,#0f1620,#0c1119);border:1px solid #1d2735;border-radius:14px;padding:14px;min-height:0;display:flex;flex-direction:column}
 .panel.center{align-items:center;justify-content:flex-start;text-align:center;padding-top:6px;overflow-y:auto;background:radial-gradient(130% 75% at 50% 22%,#11233b 0%,#0c1119 62%)}
 .brain{display:flex;flex-direction:column;align-items:center;width:100%;max-width:720px}
@@ -109,6 +109,12 @@ a{color:inherit;text-decoration:none}
 .cmdgo{background:#163049;border:1px solid #1f4d77;border-radius:50%;width:46px;height:46px;color:#fff;cursor:pointer;font-size:15px;flex:0 0 auto}
 .cmdgo:hover{box-shadow:0 0 18px -3px var(--blue);background-color:#1c416b}
 .cmdhint{color:#6e7681;font-size:11px;margin-top:10px;min-height:14px}
+.cmdsugg{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px;width:100%;max-width:620px}
+.cmdsugg .chip{display:inline-flex;align-items:center;gap:7px;cursor:pointer;text-align:left;
+  background:linear-gradient(180deg,#10202f,#0c1622);border:1px solid #213950;border-radius:12px;
+  padding:9px 13px;color:#cfe0ee;font-size:12.5px;font-weight:600;transition:border-color .15s,box-shadow .15s,transform .1s}
+.cmdsugg .chip:hover{border-color:#56d4dd;box-shadow:0 0 16px -6px #56d4ddaa;transform:translateY(-1px)}
+.cmdsugg .chip .ci{color:#56d4dd;font-size:13px;flex:0 0 auto}
 .todaycrons{margin:12px 0 0;width:100%;max-width:480px;text-align:left;
   background:rgba(255,255,255,.07);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);
   border:1.5px solid rgba(255,255,255,.65);border-radius:16px;padding:11px 14px;
@@ -196,11 +202,11 @@ input[type=text]:focus{border-color:var(--cyan);box-shadow:0 0 0 2px #56d4dd22}
 
 <!-- SPLASH -->
 <div id="splash">
-  <video autoplay loop muted playsinline><source src="/loading/LS1.mp4" type="video/mp4"></video>
+  <video autoplay loop muted playsinline><source src="/loading/newatp.mp4" type="video/mp4"></video>
   <div class="veil"></div>
   <div class="panel">
-    <div class="brand">◆ S H I&nbsp;&nbsp;A T L A S</div>
-    <div class="acro">AUTONOMOUS · TACTICAL · LEARNING · AGENT · SYSTEM</div>
+    <div class="brand">◆ Account Technology Profiler</div>
+    <div class="acro">ACCOUNT · TECHNOLOGY · PROFILER</div>
     <div class="splash-title" id="splash-greet">Initializing…</div>
     <div id="splash-status">booting cognition core</div>
     <div class="dots" style="margin-top:14px"><span></span><span></span><span></span></div>
@@ -210,7 +216,7 @@ input[type=text]:focus{border-color:var(--cyan);box-shadow:0 0 0 2px #56d4dd22}
 <!-- APP -->
 <div id="app" class="hidden">
   <div class="topbar">
-    <span class="logo">◆ ATLAS</span><span class="sub">powered by your Microsoft 365 Copilot</span>
+    <span class="logo">◆ Account Technology Profiler</span><span class="sub">powered by Nemotron (Llama-3_3-Nemotron-Super-49B-v1_5)</span>
     <div class="nav">
       <button onclick="showHome()">Home</button>
       <button onclick="showSettings()">Settings</button>
@@ -235,6 +241,18 @@ async function api(name,args){
   catch(e){return null;}
 }
 function openDiagram(u){api('open_url',{url:u});}
+// A raw .drawio file:// URI under the vault → the rendered diagrams.net viewer route.
+function drawioViewURL(uri){
+  const u=String(uri||''); const i=u.indexOf('/vault/');
+  if(i<0) return uri;
+  // Absolute URL — open_url uses webbrowser.open(), which needs a full http URL (not a relative path).
+  return location.origin+'/drawioview?p='+encodeURIComponent(u.slice(i+7));
+}
+// Open a file: .drawio renders via the viewer; everything else opens as-is.
+function openVaultFile(uri,name){
+  if(/\.drawio$/i.test(name||uri||'')) return openDiagram(drawioViewURL(uri));
+  return openDiagram(uri);
+}
 function accent(i){return["#58a6ff","#56d4dd","#39d353","#a371f7","#f0b429","#f85149"][i%6];}
 
 /* ---------- clipboard ---------- */
@@ -285,15 +303,6 @@ async function showHome(){
   $('view').innerHTML=`<div class="console fade">
     <div id="jobbar" class="jobbar"></div>
     <div class="cols">
-      <section class="panel">
-        <div class="ph">🗓 Calendar <span class="rfs" onclick="refreshDay()" title="Re-gather this day from Copilot">↻ refresh</span></div>
-        <div class="daytoggle" id="daytoggle">
-          <button data-d="yesterday" onclick="setDay('yesterday')">Yesterday</button>
-          <button data-d="today" onclick="setDay('today')">Today</button>
-          <button data-d="tomorrow" onclick="setDay('tomorrow')">Tomorrow</button>
-        </div>
-        <div id="leftlist" class="scroll"></div>
-      </section>
       <section class="panel center">
         <div class="brain">
           <div class="homenav">
@@ -304,20 +313,25 @@ async function showHome(){
             <button onclick="showArtifacts()">Artifacts</button>
           </div>
           <div class="orbwrap">
-            <video class="orb" autoplay loop muted playsinline><source src="/loading/LS1.mp4" type="video/mp4"></video>
+            <video class="orb" autoplay loop muted playsinline><source src="/loading/newatp.mp4" type="video/mp4"></video>
           </div>
           <button class="bwhist" onclick="showBrainwaves()">🧠 Brainwave History</button>
           <div class="dgreet">${esc(GREET)}</div>
           <div class="ddate">${esc(DATE)} · <span id="dtime"></span></div>
           <div class="cmdwrap">
-            <textarea id="cmd" class="cmd" rows="3" placeholder="Ask ATLAS to do anything…"
+            <textarea id="cmd" class="cmd" rows="3" placeholder="Ask Account Technology Profiler to do anything…"
                       onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendCmd();}"></textarea>
             <button class="cmdgo" onclick="sendCmd()">▶</button>
           </div>
-          <div id="cmdhint" class="cmdhint">Try: “is Verkada a good fit for AWC?”, “battlecard for ProPetro”, “trip report from yesterday’s sync”.  ·  Shift+Enter for a new line.</div>
+          <div id="cmdhint" class="cmdhint">Type anything, or pick a starting point below.  ·  Shift+Enter for a new line.</div>
+          <div class="cmdsugg">
+            <div class="chip" onclick="useTemplate('Create a strategic account briefing for [customer]')">
+              <span class="ci">🎯</span>Create a strategic account briefing for a customer</div>
+            <div class="chip" onclick="useTemplate('Is [new technology] a good fit for [customer]?')">
+              <span class="ci">🧠</span>Research whether a new technology fits a customer's infrastructure</div>
+          </div>
         </div>
         <div class="bottomstack">
-          <div id="suggestions" class="suggests"></div>
           <div id="todaycrons" class="todaycrons"></div>
         </div>
       </section>
@@ -339,18 +353,13 @@ function refreshConsole(){
     const done=JOBS.filter(j=>!ACTIVE(j.status)).slice(0,4);
     let h=`<span class="lbl">Working on</span>`;
     if(!act.length)h+=`<span class="empty" style="padding:0">idle — nothing running</span>`;
-    act.forEach(j=>{h+=`<div class="jchip run" onclick="showJob('${j.id}')"><span class="spinner"></span><span class="ji">${j.icon||'•'}</span>${esc(j.title)}<span class="jx" title="Stop &amp; close its Chrome" onclick="event.stopPropagation();cancelJob('${j.id}')">×</span></div>`;});
+    act.forEach(j=>{h+=`<div class="jchip run" onclick="showJob('${j.id}')"><span class="spinner"></span><span class="ji">${j.icon||'•'}</span>${esc(j.title)}<span class="jx" title="Stop this job and its sub-agents" onclick="event.stopPropagation();cancelJob('${j.id}')">×</span></div>`;});
     done.forEach(j=>{const cls=j.status==='error'?'err':'done';h+=`<div class="jchip ${cls}" onclick="showJob('${j.id}')"><span class="ji">${j.status==='error'?'⚠':'✓'}</span>${esc(j.title)}</div>`;});
     jb.innerHTML=h;
   }
-  // day toggle active
-  document.querySelectorAll('#daytoggle button').forEach(b=>b.classList.toggle('on',b.dataset.d===DAY));
-  // left meetings
-  const ll=$('leftlist'); if(ll)ll.innerHTML=renderMeetings();
   // right artifacts
   const rl=$('rightlist'); if(rl)rl.innerHTML=renderArtifactsMini();
   renderTodayCrons();
-  pollSuggestions();
 }
 
 /* ---------- Continual Suggestions (proactive next-best-action panel) ---------- */
@@ -400,7 +409,7 @@ async function refreshDay(){
   toast('↻ Re-gathering '+lbl+'… the calendar updates when it finishes.');
 }
 async function cancelJob(id){
-  toast('⏹ Stopping the task and closing its Chrome…');
+  toast('⏹ Stopping the task and its sub-agents…');
   await api('cancel_job',{id});
   await tick();   // refresh job list so the chip drops
 }
@@ -438,12 +447,23 @@ function renderArtifactsMini(){
 }
 
 /* ---------- command box ---------- */
+function useTemplate(tpl){
+  const el=$('cmd'); if(!el)return;
+  el.value=tpl; el.focus();
+  const a=tpl.indexOf('['), b=tpl.indexOf(']');           // select the first [placeholder] to type over
+  if(a>=0&&b>a){el.setSelectionRange(a,b+1);} else {el.setSelectionRange(tpl.length,tpl.length);}
+}
 async function sendCmd(){
   const el=$('cmd'); if(!el)return; const text=el.value.trim(); if(!text)return;
   el.value='';
   const hint=$('cmdhint');
-  if(hint)hint.textContent='🧠 ATLAS is thinking…';
+  if(hint)hint.textContent='🧠 Account Technology Profiler is thinking…';
   const res=await api('command',{text});
+  if(res&&res.blocked){                                   // guardrails input rail refused this
+    if(hint)hint.textContent=res.message||'🛡️ That request is outside what I can help with here.';
+    toast('🛡️ Guardrails: request declined');
+    return;
+  }
   await tick();
   if(res&&res.ids&&res.ids.length)showJob(res.ids[0]);   // watch the brain reason + route
   else if(hint)hint.textContent='Sent.';
@@ -508,8 +528,11 @@ async function showSkills(){
   const sk=await api('skills')||[];
   let html=`<div class="scrollview fade"><div class="h1">Skills</div><div class="grid">`;
   sk.forEach((s,idx)=>{
-    // People Resources opens its browsable/editable directory view, not a one-shot skill form.
-    const click=s.key==='find_resource'?'showPeople()':`openSkill(${JSON.stringify(s)})`;
+    // Some skills open a bespoke browsable view instead of the generic one-shot form.
+    const click=s.key==='find_resource'?'showPeople()':
+      s.key==='sedraw_network'?'showSEDraw("network")':
+      s.key==='sedraw_vision'?'showSEDraw("vision")':
+      `openSkill(${JSON.stringify(s)})`;
     html+=`<div class="skill" style="--a:${accent(idx)}" onclick='${click}'>
       <div class="sname"><span class="sicon">${s.icon}</span>${esc(s.name)}</div>
       <div class="sdesc">${esc(s.description)}</div></div>`;});
@@ -527,6 +550,438 @@ async function runSkill(s){
   const ctx={};(s.inputs||[]).forEach(inp=>{const el=$('in_'+inp.key);ctx[inp.key]=el?el.value.trim():"";});
   const res=await api('run_skill',{key:s.key,ctx:ctx});
   if(res&&res.id)showJob(res.id);
+}
+
+/* ---------- SE Draw diagram skills (network topology + vision boards) ---------- */
+const SEDRAW={
+  network:{label:'Network Diagrams',icon:'🛰',gen:'sedraw_generate_network',has:'has_network_input'},
+  vision:{label:'Vision Boards',icon:'🧭',gen:'sedraw_generate_vision',has:'has_vision_input'},
+};
+async function showSEDraw(kind){
+  VIEW='sedraw';
+  const cfg=SEDRAW[kind];
+  const list=await api('sedraw_customers')||[];
+  let cards='';
+  list.forEach((c,idx)=>{
+    // Vision uses the free-form text Studio; network keeps the file/edit flow.
+    const click = kind==='vision'
+      ? `showVisionStudio(${JSON.stringify(c.name)})`
+      : `sedrawCustomer(${JSON.stringify(kind)},${JSON.stringify(c.name)})`;
+    const badge=(kind!=='vision'&&c[cfg.has])?'<span style="color:#39d353">● input ready</span>'
+              :(kind==='vision'?'<span class="muted">open studio</span>':'<span class="muted">no input yet</span>');
+    cards+=`<div class="skill" style="--a:${accent(idx)}" onclick='${click}'>
+      <div class="sname"><span class="sicon">📁</span>${esc(c.name)}</div>
+      <div class="sdesc">${badge}</div></div>`;});
+  $('view').innerHTML=`<div class="scrollview fade">
+    <div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick="showSkills()">← Skills</a></div>
+    <div class="h1">${cfg.icon} SEdraw ${esc(cfg.label)}</div>
+    <div style="color:#8b949e;margin-bottom:12px">Pick a customer to generate their ${esc(cfg.label.toLowerCase())} from the Excel intake in their vault folder.</div>
+    <div class="grid">${cards}</div></div>`;
+}
+async function sedrawCustomer(kind,name){
+  VIEW='sedraw';
+  const cfg=SEDRAW[kind];
+  const ins=await api('sedraw_inputs',{customer:name,kind})||[];
+  let files='';
+  if(ins.length){
+    ins.forEach(f=>{
+      const editBtn = kind==='network'
+        ? `<button class="btn ghost" onclick='showNetEditor(${JSON.stringify(name)},${JSON.stringify(f.name)})'>✏️ Edit</button>`
+        : '';
+      const delBtn = kind==='network'
+        ? `<button class="btn ghost" title="Delete" onclick='deleteNetworkPrompt(${JSON.stringify(name)},${JSON.stringify(f.name)})'>🗑</button>`
+        : '';
+      files+=`<div style="display:flex;align-items:center;gap:10px;margin:6px 0;max-width:560px">
+      <span class="sicon">📄</span><span style="flex:1">${esc(f.name)}</span>
+      ${editBtn}
+      <button class="btn" onclick='sedrawGenerate(${JSON.stringify(kind)},${JSON.stringify(name)},${JSON.stringify(f.name)})'>Generate</button>
+      ${delBtn}</div>`;});
+  } else {
+    files='<div class="empty">No Excel input yet — create one or upload below.</div>';
+  }
+  const createBtn = kind==='network'
+    ? `<button class="btn purple" style="margin-bottom:10px" onclick='netNewEditor(${JSON.stringify(name)})'>＋ Create New (blank template)</button>`
+      +`<button class="btn" style="margin-bottom:10px;margin-left:6px" onclick="document.getElementById('docx_file').click()" title="Let Nemotron read a Word intake and build the network map">📄 Convert from DOCX</button>`
+      +`<input type="file" id="docx_file" accept=".docx" style="display:none" onchange='docxConvert(${JSON.stringify(name)})'>`
+    : '';
+  $('view').innerHTML=`<div class="scrollview fade">
+    <div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick='showSEDraw(${JSON.stringify(kind)})'>← ${esc(cfg.label)}</a></div>
+    <div class="h1">${cfg.icon} ${esc(name)}</div>
+    <div style="color:#8b949e;margin-bottom:10px">${esc(cfg.label)} — build from a blank template, or from the Excel inputs in this customer's vault folder:</div>
+    ${createBtn}
+    ${files}
+    <div id="sedraw_drop"
+         ondragover="event.preventDefault();this.style.borderColor='#56d4dd'"
+         ondragleave="this.style.borderColor='#30363d'"
+         ondrop='sedrawDrop(event,${JSON.stringify(kind)},${JSON.stringify(name)})'
+         style="margin:14px 0;padding:18px;border:1px dashed #30363d;border-radius:8px;max-width:560px;text-align:center">
+      <input type="file" id="sedraw_file" accept=".xlsx" style="display:none"
+             onchange='sedrawUpload(${JSON.stringify(kind)},${JSON.stringify(name)})'>
+      <button class="btn" onclick="document.getElementById('sedraw_file').click()">📤 Upload .xlsx</button>
+      <div style="margin-top:8px;color:#8b949e;font-size:12px">…or drag &amp; drop a .xlsx file here</div>
+    </div>
+    <div id="sedraw_result"></div></div>`;
+}
+function _sedrawSend(kind,name,file){
+  if(!file)return;
+  if(!/\.xlsx$/i.test(file.name)){toast('Please choose an .xlsx file');return;}
+  toast('Uploading '+file.name+'…');
+  const rd=new FileReader();
+  rd.onload=async()=>{
+    const r=await api('sedraw_upload',{customer:name,kind,filename:file.name,data_b64:rd.result});
+    if(r&&r.ok){toast('Uploaded '+r.name); sedrawCustomer(kind,name);}
+    else toast((r&&r.error)||'Upload failed');
+  };
+  rd.readAsDataURL(file);
+}
+function sedrawUpload(kind,name){           // fired by the file input's onchange
+  const el=$('sedraw_file');
+  _sedrawSend(kind,name, el&&el.files&&el.files[0]);
+}
+function sedrawDrop(ev,kind,name){          // drag-and-drop fallback (no OS dialog needed)
+  ev.preventDefault();
+  const dz=$('sedraw_drop'); if(dz)dz.style.borderColor='#30363d';
+  _sedrawSend(kind,name, ev.dataTransfer&&ev.dataTransfer.files&&ev.dataTransfer.files[0]);
+}
+async function sedrawGenerate(kind,name,filename){
+  const cfg=SEDRAW[kind];
+  const box=$('sedraw_result');
+  if(box)box.innerHTML=`<div class="log">Generating ${esc(cfg.label.toLowerCase())} for ${esc(name)}…</div>`;
+  const r=await api(cfg.gen,{customer:name,filename});
+  if(!r||!r.ok){if(box)box.innerHTML=`<div class="result">⚠️ ${esc((r&&r.error)||'Generation failed')}</div>`;return;}
+  const src='/vaultfile?p='+encodeURIComponent(r.viewer);
+  box.innerHTML=`<div style="margin-top:8px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <div style="flex:1;font-size:16px;font-weight:600;color:#e6edf3">🗺 ${esc(r.title)}</div>
+      <button class="btn ghost" onclick='openDiagram(${JSON.stringify(r.drawio_uri)})'>⬇ ${esc(r.drawio_name)}</button>
+    </div>
+    <iframe src="${src}" style="width:100%;height:72vh;border:1px solid #30363d;border-radius:8px;background:#0d1117"></iframe>
+  </div>`;
+}
+async function docxConvert(name){
+  const el=$('docx_file'); const f=el&&el.files&&el.files[0]; if(!f)return;
+  const box=$('sedraw_result'); if(box)box.innerHTML=`<div class="log">📄 Uploading ${esc(f.name)}…</div>`;
+  const rd=new FileReader();
+  rd.onload=async()=>{
+    const sub=await api('sedraw_convert_docx',{customer:name,filename:f.name,data_b64:rd.result});
+    if(!sub||!sub.id){if(box)box.innerHTML='<div class="result">⚠️ Could not start the conversion.</div>';return;}
+    toast('📄 Converting Word doc → network map (Nemotron)…');
+    docxPollJob(name, sub.id, box);
+  };
+  rd.readAsDataURL(f); el.value='';
+}
+async function docxPollJob(name,id,box){
+  while(true){
+    const j=await api('job',{id});
+    if(!j){await sleep(800);continue;}
+    if(ACTIVE(j.status)){
+      const last=((j.log||'Working…').trim().split('\n').pop()||'').trim();
+      if(box)box.innerHTML=`<div class="log">🧠 ${esc(last||'Nemotron is reading the Word doc…')}</div>`;
+      await sleep(1200); continue;
+    }
+    const r=j.result||{};
+    if(!r.ok){if(box)box.innerHTML=`<div class="result">⚠️ ${esc(r.text||r.error||'Conversion failed')}</div>`;return;}
+    const src='/vaultfile?p='+encodeURIComponent(r.viewer);
+    box.innerHTML=`<div style="margin-top:8px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <div style="flex:1;font-size:16px;font-weight:600;color:#e6edf3">🗺 ${esc(r.title)}</div>
+        <button class="btn ghost" onclick='openDiagram(${JSON.stringify(r.drawio_uri)})'>⬇ ${esc(r.drawio_name)}</button>
+      </div>
+      <div class="muted" style="margin-bottom:8px">${esc(r.text||'')} &nbsp;·&nbsp; <a style="cursor:pointer;color:#56d4dd" onclick='sedrawCustomer("network",${JSON.stringify(name)})'>↻ edit the intake &amp; regenerate</a></div>
+      <iframe src="${src}" style="width:100%;height:68vh;border:1px solid #30363d;border-radius:8px;background:#0d1117"></iframe>
+    </div>`;
+    return;
+  }
+}
+
+/* ---------- SEDraw Network: in-GUI Excel editor (edit fields → save back to the .xlsx) ---------- */
+let NET={customer:'',filename:'',data:{sites:[]},catalog:[]};
+const NET_INP='width:100%;background:#0c121b;border:1px solid #202a3a;border-radius:8px;color:#e6edf3;font:inherit;font-size:14px;padding:9px 11px;outline:none';
+async function showNetEditor(name,filename){
+  const r=await api('sedraw_load_network',{customer:name,filename});
+  if(!r||!r.ok){toast((r&&r.error)||'Could not load Excel');return;}
+  NET={customer:name,filename:r.filename,data:r.data||{sites:[]},catalog:r.categories||[],isNew:false};
+  renderNetEditor();
+}
+async function netNewEditor(name){
+  const r=await api('sedraw_new_network',{customer:name});
+  if(!r||!r.ok){toast((r&&r.error)||'Could not start a new template');return;}
+  NET={customer:name,filename:r.filename,data:r.data||{sites:[]},catalog:r.categories||[],isNew:true};
+  renderNetEditor();
+}
+function renderNetEditor(){
+  VIEW='neteditor';
+  const d=NET.data;
+  let sites='';
+  (d.sites||[]).forEach((s,si)=>{
+    let cards='';
+    (s.categories||[]).forEach((c,ci)=>{
+      const sub=[c.qty_model,(c.rating?('★'+c.rating):''),(c.status==='refresh'?'refresh':'')].filter(Boolean).join(' · ');
+      cards+=`<div class="mini" style="--a:${c.status==='refresh'?'#58a6ff':'#39d353'}">
+        <div class="mt"><span>🔧</span>${esc(c.category)}
+          <span style="margin-left:auto;display:flex;gap:6px">
+            <button class="copybtn" style="padding:3px 8px" onclick="netEditCat(${si},${ci})">edit</button>
+            <button class="copybtn" style="padding:3px 8px" onclick="netDelCat(${si},${ci})">✕</button></span></div>
+        <div class="ms">${esc(sub||'(no details yet)')}</div></div>`;
+    });
+    const present=new Set((s.categories||[]).map(c=>(c.category||'').toLowerCase()));
+    const opts=NET.catalog.filter(n=>!present.has(n.toLowerCase()))
+      .map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+    sites+=`<section class="bpanel" style="margin-top:14px">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <input value="${esc(s.label||'')}" placeholder="Site name" style="${NET_INP};flex:1"
+               onchange="NET.data.sites[${si}].label=this.value">
+        <select style="${NET_INP};width:120px" onchange="NET.data.sites[${si}].site_type=this.value">
+          <option value="dc" ${s.site_type==='dc'?'selected':''}>DC</option>
+          <option value="branch" ${s.site_type!=='dc'?'selected':''}>Branch</option></select>
+        <button class="copybtn" style="padding:6px 10px" onclick="netDelSite(${si})">✕ site</button>
+      </div>
+      ${cards||'<div class="empty">No devices yet — add one below.</div>'}
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <select id="netcatsel_${si}" style="${NET_INP};max-width:280px">${opts||'<option value="">(all 23 categories added)</option>'}</select>
+        <button class="btn ghost" onclick="netAddCat(${si})">＋ Add device category</button>
+      </div></section>`;
+  });
+  $('view').innerHTML=`<div class="scrollview fade">
+    <div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick='sedrawCustomer("network",${JSON.stringify(NET.customer)})'>← ${esc(NET.customer)}</a></div>
+    <div class="h1">${NET.isNew?'＋ New':'✏️ Edit'} Network Intake — ${esc(NET.customer)}</div>
+    <div class="muted" style="margin:-4px 0 8px;font-size:12px">${NET.isNew?`New template <b>${esc(NET.filename)}</b> — Save creates the Excel in the customer's vault.`:`Editing <b>${esc(NET.filename)}</b> directly. Saves write back to the Excel file in the customer's vault.`}</div>
+    <div style="margin:6px 0;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" onclick="netSave(false)">💾 Save to Excel</button>
+      <button class="btn purple" onclick="netSave(true)">💾 Save &amp; Generate</button>
+      <button class="btn ghost" onclick="netAddSite()">＋ Add site</button></div>
+    ${sites||'<div class="empty">No sites — add one.</div>'}
+    </div>`;
+}
+function netAddSite(){ NET.data.sites=NET.data.sites||[]; NET.data.sites.push({label:'New Site',site_type:'branch',categories:[]}); renderNetEditor(); }
+function netDelSite(si){ NET.data.sites.splice(si,1); renderNetEditor(); }
+function netAddCat(si){
+  const sel=$('netcatsel_'+si); const name=sel?sel.value:''; if(!name){toast('Pick a category');return;}
+  NET.data.sites[si].categories.push({category:name,qty_model:'',connected_to:'',end_of_support:'',rating:null,status:'current',notes:''});
+  netEditCat(si, NET.data.sites[si].categories.length-1);    // open it for editing right away
+}
+function netDelCat(si,ci){ NET.data.sites[si].categories.splice(ci,1); renderNetEditor(); }
+function netEditCat(si,ci){
+  VIEW='neteditor';
+  const c=NET.data.sites[si].categories[ci];
+  const dl=NET.catalog.map(n=>`<option value="${esc(n)}">`).join('');
+  const ratOpts=['','1','2','3','4','5'].map(v=>`<option value="${v}" ${String(c.rating==null?'':c.rating)===v?'selected':''}>${v||'—'}</option>`).join('');
+  const ta='width:100%;background:#0c121b;border:1px solid #202a3a;border-radius:8px;color:#e6edf3;font:inherit;padding:10px';
+  const f=(id,val,ph)=>`<input type="text" id="nc_${id}" value="${esc(val||'')}" placeholder="${ph||''}" style="${NET_INP}">`;
+  $('view').innerHTML=`<div class="scrollview fade"><div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick="renderNetEditor()">← back</a></div>
+    <div class="h1">Device — ${esc(NET.data.sites[si].label||'')}</div>
+    <div style="max-width:560px">
+    <label>Category *</label><input type="text" id="nc_category" list="netcatlist" value="${esc(c.category||'')}" placeholder="e.g. Core Switch (or Servers2)" style="${NET_INP}">
+    <datalist id="netcatlist">${dl}</datalist>
+    <label>Qty x Model</label>${f('qty_model',c.qty_model,'e.g. 2x Palo Alto PA-850 (HA)')}
+    <label>Connected to <span class="muted">(comma-separated category names)</span></label>${f('connected_to',c.connected_to,'e.g. Core Switch, SD-WAN')}
+    <label>Rating</label><select id="nc_rating" style="${NET_INP}">${ratOpts}</select>
+    <label>Status</label><select id="nc_status" style="${NET_INP}"><option value="current" ${c.status!=='refresh'?'selected':''}>current</option><option value="refresh" ${c.status==='refresh'?'selected':''}>refresh</option></select>
+    <label>End of Support</label>${f('end_of_support',c.end_of_support,'e.g. 2028-06-30')}
+    <label>Notes</label><textarea id="nc_notes" rows="3" style="${ta}">${esc(c.notes||'')}</textarea>
+    <button class="btn" style="margin-top:12px" onclick="netCatSave(${si},${ci})">Done</button></div></div>`;
+}
+function netCatSave(si,ci){
+  const g=id=>{const el=$('nc_'+id);return el?el.value.trim():'';};
+  const cat=g('category'); if(!cat){toast('Category is required');return;}
+  const rat=$('nc_rating').value;
+  NET.data.sites[si].categories[ci]={category:cat,qty_model:g('qty_model'),connected_to:g('connected_to'),
+    end_of_support:g('end_of_support'),rating:rat?parseInt(rat):null,status:$('nc_status').value,notes:g('notes')};
+  renderNetEditor();
+}
+async function netSave(thenGen){
+  const r=await api('sedraw_save_network',{customer:NET.customer,filename:NET.filename,data:NET.data});
+  if(!r||!r.ok){toast((r&&r.error)||'Save failed');return;}
+  toast(`Saved to ${r.filename} · ${r.sites} site(s), ${r.categories} device(s)`);
+  if(thenGen){ const c=NET.customer,f=NET.filename; await sedrawCustomer('network',c); sedrawGenerate('network',c,f); }
+}
+
+/* ---------- SEDraw Vision Studio: free-form text → Nemotron → combined current/future diagram ---------- */
+let VIS={customer:'',ts:'',data:{current:{systems:[],data_flows:[]},future:{systems:[],data_flows:[]}},enums:{}};
+const VIS_INP='width:100%;background:#0c121b;border:1px solid #202a3a;border-radius:8px;color:#e6edf3;font:inherit;font-size:14px;padding:9px 11px;outline:none';
+async function showVisionStudio(name){
+  VIEW='vision';
+  const sess=await api('sedraw_vision_sessions',{customer:name})||[];
+  let hist='';
+  if(sess.length){
+    sess.forEach(s=>{const tags=[s.has_current?'current':'',s.has_future?'future':''].filter(Boolean).join(' · ');
+      hist+=`<div style="display:flex;align-items:center;gap:10px;margin:6px 0;max-width:640px">
+        <span class="sicon">🗂</span><span style="flex:1">${esc(s.label)} <span class="muted" style="font-size:12px">${esc(tags)}</span></span>
+        <button class="btn ghost" onclick='visView(${JSON.stringify(name)},${JSON.stringify(s.ts)})'>View</button>
+        <button class="btn ghost" onclick='showVisionEditor(${JSON.stringify(name)},${JSON.stringify(s.ts)})'>✏️ Edit</button>
+        <button class="btn ghost" title="Delete" onclick='deleteVisionPrompt(${JSON.stringify(name)},${JSON.stringify(s.ts)},${JSON.stringify(s.label)})'>🗑</button></div>`;});
+  } else hist='<div class="empty">No saved vision boards yet — generate one above.</div>';
+  const ta='width:100%;background:#0c121b;border:1px solid #202a3a;border-radius:8px;color:#e6edf3;font:inherit;padding:11px;line-height:1.5;min-height:130px';
+  $('view').innerHTML=`<div class="scrollview fade">
+    <div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick="showSEDraw('vision')">← Vision Boards</a></div>
+    <div class="h1">🧭 Vision Board — ${esc(name)}</div>
+    <div style="color:#8b949e;margin-bottom:10px">Describe the customer's technology in plain English. Nemotron builds a <b>current-state</b> (top) and <b>future-state</b> (bottom) architecture diagram.</div>
+    <div style="max-width:840px">
+      <label style="display:block;color:#56d4dd;margin:8px 0 4px">Current State</label>
+      <textarea id="vis_cur" placeholder="e.g. Toast POS and Shopify feed NetSuite ERP; Boomi integrates them; Domo dashboards." style="${ta}"></textarea>
+      <label style="display:block;color:#56d4dd;margin:12px 0 4px">Future State</label>
+      <textarea id="vis_fut" placeholder="e.g. Replace Domo with Azure Data Lake + Power BI; add an AI analytics layer." style="${ta}"></textarea>
+      <button class="btn purple" style="margin-top:12px" onclick='visGenerate(${JSON.stringify(name)})'>✨ Generate Vision Board</button>
+    </div>
+    <div id="vis_result" style="margin-top:14px"></div>
+    <div style="margin-top:18px;font-size:15px;font-weight:600;color:#e6edf3">History</div>
+    ${hist}
+    </div>`;
+}
+async function visGenerate(name){
+  const cur=($('vis_cur')||{}).value?$('vis_cur').value.trim():'', fut=($('vis_fut')||{}).value?$('vis_fut').value.trim():'';
+  if(!cur&&!fut){toast('Enter current and/or future state text');return;}
+  const box=$('vis_result'); if(box)box.innerHTML='<div class="log">🧠 Starting Nemotron job… (runs in the background — watch the tasks bar up top)</div>';
+  const sub=await api('sedraw_vision_submit',{customer:name,current_text:cur,future_text:fut});
+  if(!sub||!sub.id){if(box)box.innerHTML='<div class="result">⚠️ Could not start the job.</div>';return;}
+  toast('Vision board job started');
+  visPollJob(name, sub.id, box);
+}
+async function visPollJob(name,id,box){
+  while(true){
+    const j=await api('job',{id});
+    if(!j){await sleep(800);continue;}
+    if(ACTIVE(j.status)){
+      const last=((j.log||'Generating…').trim().split('\n').pop()||'').trim();
+      if(box)box.innerHTML=`<div class="log">🧠 ${esc(last||'Nemotron is building the vision board…')}</div>`;
+      await sleep(1200); continue;
+    }
+    const r=(j.result&&j.result.data)||null;
+    if(j.status!=='done'||!r||!r.ok){
+      if(box)box.innerHTML=`<div class="result">⚠️ ${esc((r&&r.error)||(j.result&&j.result.text)||'Generation failed')}</div>`;
+      return;
+    }
+    visShowResult(name, r);
+    return;
+  }
+}
+function visShowResult(name,r){
+  const box=$('vis_result'); if(!box)return;
+  if(!r||!r.ok){box.innerHTML=`<div class="result">⚠️ ${esc((r&&r.error)||'Generation failed')}</div>`;return;}
+  const src='/vaultfile?p='+encodeURIComponent(r.viewer);
+  const cc=(r.counts&&r.counts.current_state)||0, fc=(r.counts&&r.counts.future_state)||0;
+  box.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+      <div style="flex:1;font-size:16px;font-weight:600;color:#e6edf3">🗺 ${esc(r.title)} <span class="muted" style="font-size:12px">current ${cc} · future ${fc}</span></div>
+      <button class="btn ghost" onclick='openDiagram(${JSON.stringify(r.drawio_uri)})'>⬇ ${esc(r.drawio_name)}</button>
+      <button class="btn ghost" onclick='showVisionEditor(${JSON.stringify(name)},${JSON.stringify(r.ts)})'>✏️ Edit</button>
+    </div>
+    <iframe src="${src}" style="width:100%;height:74vh;border:1px solid #30363d;border-radius:8px;background:#0d1117"></iframe>`;
+}
+async function visView(name,ts){
+  toast('Rendering…');
+  const r=await api('sedraw_vision_view',{customer:name,ts});
+  if(VIEW!=='vision') await showVisionStudio(name);
+  visShowResult(name,r);
+  const box=$('vis_result'); if(box) box.scrollIntoView({behavior:'smooth'});
+}
+
+/* --- Vision editor (mirror of the network editor, for systems + data flows of both states) --- */
+function _visOpts(list,cur){return (list||[]).map(v=>`<option value="${esc(v)}" ${v===cur?'selected':''}>${esc(v)}</option>`).join('');}
+async function showVisionEditor(name,ts){
+  const r=await api('sedraw_vision_load',{customer:name,ts});
+  if(!r||!r.ok){toast((r&&r.error)||'Could not load');return;}
+  VIS={customer:name,ts:ts,data:{current:r.current||{systems:[],data_flows:[]},future:r.future||{systems:[],data_flows:[]}},
+       enums:{statuses:r.statuses||[],tiers:r.tiers||[],flow_types:r.flow_types||[],line_styles:r.line_styles||[]}};
+  renderVisionEditor();
+}
+function renderVisionEditor(){
+  VIEW='viseditor';
+  const sec=(sk,label)=>{
+    const st=VIS.data[sk]||{systems:[],data_flows:[]};
+    let sys='';(st.systems||[]).forEach((s,i)=>{sys+=`<div class="mini" style="--a:#58a6ff">
+      <div class="mt"><span>🔹</span>${esc(s.system_name)}${s.vendor?' — '+esc(s.vendor):''}
+        <span style="margin-left:auto;display:flex;gap:6px">
+          <button class="copybtn" style="padding:3px 8px" onclick="visEditSys('${sk}',${i})">edit</button>
+          <button class="copybtn" style="padding:3px 8px" onclick="visDel('${sk}','systems',${i})">✕</button></span></div>
+      <div class="ms">${esc(s.tier||'')} · ${esc(s.status||'')}${s.role?' · '+esc(s.role):''}</div></div>`;});
+    let fl='';(st.data_flows||[]).forEach((f,i)=>{fl+=`<div class="mini" style="--a:#39d353">
+      <div class="mt"><span>↳</span>${esc(f.source)} → ${esc(f.target)}
+        <span style="margin-left:auto;display:flex;gap:6px">
+          <button class="copybtn" style="padding:3px 8px" onclick="visEditFlow('${sk}',${i})">edit</button>
+          <button class="copybtn" style="padding:3px 8px" onclick="visDel('${sk}','data_flows',${i})">✕</button></span></div>
+      <div class="ms">${esc(f.label||'')} · ${esc(f.flow_type||'')} · ${esc(f.line_style||'')}</div></div>`;});
+    return `<section class="bpanel" style="margin-top:14px"><h2>${label}</h2>
+      <div class="muted" style="margin:-2px 0 6px;font-size:12px">Systems</div>${sys||'<div class="empty">No systems.</div>'}
+      <button class="btn ghost" style="margin-top:6px" onclick="visAddSys('${sk}')">＋ Add system</button>
+      <div class="muted" style="margin:14px 0 6px;font-size:12px">Data Flows</div>${fl||'<div class="empty">No flows.</div>'}
+      <button class="btn ghost" style="margin-top:6px" onclick="visAddFlow('${sk}')">＋ Add data flow</button></section>`;
+  };
+  $('view').innerHTML=`<div class="scrollview fade">
+    <div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick='showVisionStudio(${JSON.stringify(VIS.customer)})'>← ${esc(VIS.customer)}</a></div>
+    <div class="h1">✏️ Edit Vision Board — ${esc(VIS.customer)}</div>
+    <div class="muted" style="margin:-4px 0 8px;font-size:12px">Editing the backend Excel for this session. Saves write back and regenerate the diagram.</div>
+    <div style="margin:6px 0;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" onclick="visSave(false)">💾 Save</button>
+      <button class="btn purple" onclick="visSave(true)">💾 Save &amp; Generate</button></div>
+    ${sec('current','Current State')}${sec('future','Future State')}
+    <div id="vis_result" style="margin-top:14px"></div></div>`;
+}
+function visEditSys(sk,i){
+  VIEW='viseditor';
+  const s=VIS.data[sk].systems[i];
+  const ta='width:100%;background:#0c121b;border:1px solid #202a3a;border-radius:8px;color:#e6edf3;font:inherit;padding:10px';
+  const f=(id,val,ph)=>`<input type="text" id="vs_${id}" value="${esc(val||'')}" placeholder="${ph||''}" style="${VIS_INP}">`;
+  $('view').innerHTML=`<div class="scrollview fade"><div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick="renderVisionEditor()">← back</a></div>
+    <div class="h1">System — ${esc(sk)} state</div><div style="max-width:560px">
+    <label>System name *</label>${f('system_name',s.system_name,'e.g. Snowflake')}
+    <label>Vendor</label>${f('vendor',s.vendor,'e.g. Snowflake Inc.')}
+    <label>Role</label>${f('role',s.role,'e.g. Cloud Data Warehouse')}
+    <label>Status</label><select id="vs_status" style="${VIS_INP}">${_visOpts(VIS.enums.statuses,s.status)}</select>
+    <label>Tier</label><select id="vs_tier" style="${VIS_INP}">${_visOpts(VIS.enums.tiers,s.tier)}</select>
+    <label>Description</label><textarea id="vs_description" rows="2" style="${ta}">${esc(s.description||'')}</textarea>
+    <label>Use cases <span class="muted">(pipe-separated)</span></label>${f('use_cases',s.use_cases,'A | B | C')}
+    <label>Pain points <span class="muted">(pipe-separated)</span></label>${f('pain_points',s.pain_points,'')}
+    <label>Notes</label>${f('notes',s.notes,'')}
+    <label>Color hint <span class="muted">(hex, optional)</span></label>${f('color_hint',s.color_hint,'#0078D4')}
+    <button class="btn" style="margin-top:12px" onclick="visSysSave('${sk}',${i})">Done</button></div></div>`;
+}
+function visSysSave(sk,i){
+  const g=id=>{const el=$('vs_'+id);return el?el.value.trim():'';};
+  const name=g('system_name'); if(!name){toast('System name required');return;}
+  VIS.data[sk].systems[i]={system_name:name,vendor:g('vendor'),role:g('role'),
+    status:$('vs_status').value,tier:$('vs_tier').value,color_hint:g('color_hint'),notes:g('notes'),
+    description:g('description'),use_cases:g('use_cases'),pain_points:g('pain_points')};
+  renderVisionEditor();
+}
+function visEditFlow(sk,i){
+  VIEW='viseditor';
+  const fl=VIS.data[sk].data_flows[i];
+  const sysNames=(VIS.data[sk].systems||[]).map(s=>s.system_name);
+  const sysOpts=v=>sysNames.map(n=>`<option value="${esc(n)}" ${n===v?'selected':''}>${esc(n)}</option>`).join('');
+  const f=(id,val,ph)=>`<input type="text" id="vf_${id}" value="${esc(val||'')}" placeholder="${ph||''}" style="${VIS_INP}">`;
+  $('view').innerHTML=`<div class="scrollview fade"><div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick="renderVisionEditor()">← back</a></div>
+    <div class="h1">Data Flow — ${esc(sk)} state</div><div style="max-width:560px">
+    <label>Source *</label><select id="vf_source" style="${VIS_INP}">${sysOpts(fl.source)}</select>
+    <label>Target *</label><select id="vf_target" style="${VIS_INP}">${sysOpts(fl.target)}</select>
+    <label>Label</label>${f('label',fl.label,'e.g. ETL load')}
+    <label>Flow type</label><select id="vf_flow_type" style="${VIS_INP}">${_visOpts(VIS.enums.flow_types,fl.flow_type)}</select>
+    <label>Line style</label><select id="vf_line_style" style="${VIS_INP}">${_visOpts(VIS.enums.line_styles,fl.line_style)}</select>
+    <button class="btn" style="margin-top:12px" onclick="visFlowSave('${sk}',${i})">Done</button></div></div>`;
+}
+function visFlowSave(sk,i){
+  const src=$('vf_source').value, tgt=$('vf_target').value;
+  if(!src||!tgt){toast('Pick source and target (add systems first)');return;}
+  VIS.data[sk].data_flows[i]={source:src,target:tgt,label:($('vf_label').value||'').trim(),
+    flow_type:$('vf_flow_type').value,line_style:$('vf_line_style').value};
+  renderVisionEditor();
+}
+function visAddSys(sk){
+  VIS.data[sk].systems.push({system_name:'New System',vendor:'',role:'',status:'current',tier:'source',color_hint:'',notes:'',description:'',use_cases:'',pain_points:''});
+  visEditSys(sk, VIS.data[sk].systems.length-1);
+}
+function visAddFlow(sk){
+  const sys=VIS.data[sk].systems||[];
+  if(sys.length<2){toast('Add at least two systems first');return;}
+  VIS.data[sk].data_flows.push({source:sys[0].system_name,target:sys[1].system_name,label:'',flow_type:'data_feed',line_style:'solid'});
+  visEditFlow(sk, VIS.data[sk].data_flows.length-1);
+}
+function visDel(sk,kind,i){ VIS.data[sk][kind].splice(i,1); renderVisionEditor(); }
+async function visSave(thenGen){
+  const r=await api('sedraw_vision_save',{customer:VIS.customer,ts:VIS.ts,data:VIS.data});
+  if(!r||!r.ok){toast((r&&r.error)||'Save failed');return;}
+  if(r.ts)VIS.ts=r.ts;
+  toast('Saved');
+  if(thenGen){ visShowResult(VIS.customer,r); const box=$('vis_result'); if(box) box.scrollIntoView({behavior:'smooth'}); }
 }
 
 /* ---------- rich briefing ---------- */
@@ -588,7 +1043,7 @@ async function showBrainwaves(){
   const bw=await api('brainwaves')||[];
   let h=`<div class="scrollview fade"><div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick="showHome()">← Home</a></div>
     <div class="h1">🧠 Brainwave History</div>
-    <div class="muted" style="margin:-4px 0 14px;font-size:12px">Every brainwave the ATLAS brain ran — multi-agent research + analysis. Click to read; 🗑 to remove.</div>`;
+    <div class="muted" style="margin:-4px 0 14px;font-size:12px">Every brainwave the Account Technology Profiler brain ran — multi-agent research + analysis. Click to read; 🗑 to remove.</div>`;
   if(!bw.length)h+=`<div class="empty">No brainwaves yet. Ask the brain something like “is Verkada a good fit for ProPetro?”.</div>`;
   bw.forEach((a,idx)=>{h+=`<div class="art" style="--a:${accent(idx)};position:relative" onclick='openArtifact(${JSON.stringify(a.id)})'>
     <button class="copybtn" style="position:absolute;top:10px;right:10px;padding:3px 9px" title="Delete"
@@ -607,7 +1062,7 @@ async function openArtifact(id){
   if(!isBw)btns+=`<button class="btn ghost" onclick='assignPrompt(${JSON.stringify(a.id)})'>📁 File to customer</button> `;  // brainwaves are multifaceted — not filed
   if(a.skill==='trip_report')btns+=`<button class="btn" onclick='emailArtifact(${JSON.stringify(a.id)})'>✉️ Email via Outlook</button> `;
   if(a.diagram)btns+=`<button class="btn purple" onclick='openDiagram(${JSON.stringify(a.diagram)})'>🗺 Open diagram</button> `;
-  (a.files||[]).forEach(f=>{btns+=`<button class="btn ghost" onclick='openDiagram(${JSON.stringify(f.uri)})'>📄 ${esc(f.name)}</button> `;});
+  (a.files||[]).forEach(f=>{btns+=`<button class="btn ghost" onclick='openVaultFile(${JSON.stringify(f.uri)},${JSON.stringify(f.name)})'>📄 ${esc(f.name)}</button> `;});
   btns+=`<button class="btn ghost" style="border-color:#5b2333;color:#ff9a9a" onclick='deleteArtifactPrompt(${JSON.stringify(a.id)},${JSON.stringify((isBw?"Brainwave — ":(a.skill_name||"")+" — ")+(a.title||""))})'>🗑 Delete</button> `;
   const back=isBw?`<a style="cursor:pointer;color:#56d4dd" onclick="showBrainwaves()">← Brainwave History</a>`
             :a.customer?`<a style="cursor:pointer;color:#56d4dd" onclick='showCustomer(${JSON.stringify(a.customer)})'>← ${esc(a.customer)}</a>`
@@ -662,24 +1117,33 @@ async function sendChat(){
 }
 
 /* ---------- ABOUT ---------- */
-function showAbout(){
+async function showAbout(){
   VIEW='about';
-  const acro=[["Autonomous","Runs your day end-to-end — gathers, recaps, drafts — without babysitting."],
-    ["Tactical","Built for the field: meeting prep, trip reports, BANTC, account intel."],
-    ["Learning","Every gather and skill output is saved to your vault and Artifacts."],
-    ["Agent","Each request is its own agent on its own Chrome instance, running in parallel."],
-    ["System","One operating surface for your customer-facing work."]];
-  let h=`<div class="scrollview fade"><div class="h1" style="text-align:center">◆ A.T.L.A.S.</div>
+  const caps=[["Customer Vault","One folder per customer — trip reports, profiles, diagrams, and every generation, kept on your machine."],
+    ["Account Technology Profiles","An editable technology inventory, business overview, and key contacts for each account."],
+    ["SEdraw Network Diagrams","Turn an Excel intake into a multi-site draw.io network topology — edit the fields right in the GUI."],
+    ["SEdraw Vision Boards","Generate current- and future-state architecture vision boards from structured Excel."],
+    ["Local AI — NVIDIA Nemotron","Runs entirely on-box. No cloud, no API keys, no tokens — your data stays local."]];
+  let h=`<div class="scrollview fade"><div class="h1" style="text-align:center">◆ Account Technology Profiler</div>
     <div style="max-width:760px;margin:0 auto;line-height:1.6">
-    <p style="color:#9fb0c3">ATLAS is your tactical operating system for customer engagements — powered entirely by
-    <b style="color:#56d4dd">your Microsoft 365 Copilot</b>, driven through the browser. Every request runs as its
-    own background job on its own Chrome instance, so work keeps going no matter where you navigate, and results
-    always land in Artifacts.</p>`;
-  acro.forEach(a=>{h+=`<div class="bcard" style="border-left-color:#56d4dd"><div class="bt" style="color:#56d4dd">${a[0]}</div><div class="bsub">${esc(a[1])}</div></div>`;});
-  h+=`<p class="muted" style="margin-top:14px">AUTONOMOUS · TACTICAL · LEARNING · AGENT · SYSTEM</p>
+    <p style="color:#9fb0c3">Account Technology Profiler is your operating surface for customer engagements —
+    powered by a <b style="color:#56d4dd">local NVIDIA Nemotron model</b>
+    (<code>Llama-3_3-Nemotron-Super-49B-v1_5</code>) running on this machine. Build customer profiles,
+    network topologies, and architecture vision boards, with every result saved to your vault and Artifacts.</p>`;
+  caps.forEach(a=>{h+=`<div class="bcard" style="border-left-color:#56d4dd"><div class="bt" style="color:#56d4dd">${a[0]}</div><div class="bsub">${esc(a[1])}</div></div>`;});
+  h+=`<div id="engine_status" class="bcard" style="border-left-color:#39d353;margin-top:14px">
+      <div class="bt" style="color:#39d353">⏳ Checking local inference engine…</div></div>
     <p style="margin-top:10px;color:#9fb0c3">📖 To view the user manual,
     <a onclick="openManual()" style="color:#56d4dd;cursor:pointer;text-decoration:underline">click here</a>.</p></div></div>`;
   $('view').innerHTML=h;
+  // Live engine status (NVIDIA Nemotron via vLLM / NIM) — demo-day readiness.
+  const s=await api('engine_status')||{};
+  const box=$('engine_status'); if(box){
+    const ok=s.ok; const dot=ok?'🟢':'🔴';
+    box.style.borderLeftColor=ok?'#39d353':'#f85149';
+    box.innerHTML=`<div class="bt" style="color:${ok?'#39d353':'#f85149'}">${dot} Inference engine ${ok?'online':'unreachable'}</div>
+      <div class="bsub">Model: <code>${esc(s.model||'—')}</code> · Context: ${s.max_model_len?esc(String(s.max_model_len))+' tokens':'—'} · Endpoint: <code>${esc(s.base_url||'')}</code>${ok?'':' · '+esc(s.error||'')}</div>`;
+  }
 }
 
 /* ---------- SETTINGS ---------- */
@@ -688,16 +1152,8 @@ async function showSettings(){
   const s=await api('get_settings')||{};
   $('view').innerHTML=`<div class="scrollview fade"><div class="h1">⚙ Settings</div>
     <div style="max-width:640px">
-    <div style="color:#8b949e;font-size:13px;margin-bottom:10px">Configure how ATLAS hands off your work. These persist in your vault.</div>
-    <label>Trip report email recipients</label>
-    <input type="text" id="set_to" placeholder="name@company.com, name2@company.com">
-    <label>Email signature (added under the report)</label>
-    <input type="text" id="set_sig" placeholder="Manuel Zelaya · Solutions Architect · SHI">
-    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer">
-      <input type="checkbox" id="set_auto" style="width:auto"> Auto-open an Outlook draft when a trip report finishes</label>
-    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer">
-      <input type="checkbox" id="set_showchrome" style="width:auto"> Show the Copilot Chrome windows on-screen <span class="muted" style="font-weight:400">— debug. Off = they run hidden &amp; minimized. Applies to windows opened after you save.</span></label>
-    <div style="margin-top:18px;padding-top:14px;border-top:1px solid #1d2735">
+    <div style="color:#8b949e;font-size:13px;margin-bottom:10px">Configure how Account Technology Profiler runs. These persist in your vault.</div>
+    <div style="margin-top:4px;padding-top:4px">
       <label>🌍 Timezone <span class="muted" style="font-weight:400">— when Cron Jobs fire</span></label>
       <select id="set_tz" style="width:100%;max-width:340px;background:#0c121b;border:1px solid #202a3a;border-radius:8px;color:#e6edf3;font:inherit;font-size:14px;padding:11px 12px;margin-top:4px">
         <option value="America/New_York">Eastern · New York</option>
@@ -720,24 +1176,13 @@ async function showSettings(){
              placeholder="••••••" style="max-width:160px;letter-spacing:4px"
              oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
     <div style="margin-top:18px;padding-top:14px;border-top:1px solid #1d2735">
-      <label>💡 Continual Advice <span class="muted" style="font-weight:400">— proactive suggestions on Home</span></label>
-      <div style="color:#8b949e;font-size:12px;margin:2px 0 8px">ATLAS quietly suggests your next best action based on your upcoming meeting and the customer involved. It only suggests — nothing runs until you tap it.</div>
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="set_sugg" style="width:auto"> Show Continual Suggestions on the Home screen</label>
-      <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer"><input type="checkbox" id="set_suggai" style="width:auto"> Include strategic (AI) suggestions <span class="muted" style="font-weight:400">— uses Copilot; off = instant tips only</span></label>
-      <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer"><input type="checkbox" id="set_suggwh" style="width:auto"> Only generate strategic suggestions during work hours (7am–7pm)</label>
-      <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:12px">
-        <div><label style="font-size:12px">Refresh frequency</label><br>
-          <select id="set_suggfreq" style="background:#0c121b;border:1px solid #202a3a;border-radius:8px;color:#e6edf3;font:inherit;font-size:13px;padding:8px 10px;margin-top:3px">
-            <option value="30">Every 30 minutes</option><option value="60">Every hour</option>
-            <option value="120">Every 2 hours</option><option value="240">Every 4 hours</option></select></div>
-        <div><label style="font-size:12px">Focus on one customer</label><br>
-          <select id="set_suggfocus" style="background:#0c121b;border:1px solid #202a3a;border-radius:8px;color:#e6edf3;font:inherit;font-size:13px;padding:8px 10px;margin-top:3px;min-width:210px">
-            <option value="">Auto — follow my next meeting</option></select></div>
-      </div></div>
+      <label>🛡️ Guardrails <span class="muted" style="font-weight:400">— NeMo Guardrails on the command box</span></label>
+      <div style="color:#8b949e;font-size:12px;margin:2px 0 6px">Keeps the brain on-topic (your customers + technology research) and politely declines off-topic, unsafe, or prompt-injection input. Runs on the local Nemotron; fails open so it never blocks legitimate work.</div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="set_guard" style="width:auto"> Enable the command-box guardrail</label></div>
     <div style="margin-top:16px"><button class="btn" onclick="saveSettings()">Save settings</button>
     <span id="set_msg" style="color:#39d353;font-size:12px;margin-left:12px"></span></div>
     <div style="margin-top:22px;padding-top:16px;border-top:1px solid #1d2735">
-      <label>🧠 Brain Rules <span class="muted" style="font-weight:400">— train how the ATLAS brain works</span></label>
+      <label>🧠 Brain Rules <span class="muted" style="font-weight:400">— train how the Account Technology Profiler brain works</span></label>
       <div style="color:#8b949e;font-size:12px;margin:2px 0 6px">Read on every brainwave and injected into the brain's prompts. Rule 1 is “look at the customer's organized artifacts first.”</div>
       <textarea id="set_rules" rows="14" style="width:100%;background:#0c121b;border:1px solid #202a3a;border-radius:8px;color:#e6edf3;font:13px/1.5 Consolas,monospace;padding:12px"></textarea>
       <div style="margin-top:8px"><button class="btn" onclick="saveBrainRules()">Save brain rules</button>
@@ -745,21 +1190,9 @@ async function showSettings(){
         <span id="rules_path" class="muted" style="font-size:11px;margin-left:10px"></span></div>
     </div>
     </div></div>`;
-  $('set_to').value=s.trip_report_recipients||"";
-  $('set_sig').value=s.email_signature||"";
-  $('set_auto').checked=!!s.auto_email_trip_reports;
-  if($('set_showchrome'))$('set_showchrome').checked=!!s.show_chrome_windows;
   $('set_pin').value=s.system_pin||"";
   if($('set_tz'))$('set_tz').value=s.timezone||"America/New_York";
-  if($('set_sugg'))$('set_sugg').checked=s.continual_suggestions!==false;
-  if($('set_suggai'))$('set_suggai').checked=s.suggestions_ai!==false;
-  if($('set_suggwh'))$('set_suggwh').checked=s.suggestions_workhours_only!==false;
-  if($('set_suggfreq'))$('set_suggfreq').value=String(s.suggestions_frequency_min||60);
-  if($('set_suggfocus')){
-    const cs=await api('customers')||[];
-    cs.forEach(c=>{const o=document.createElement('option');o.value=c.name;o.textContent=c.name;$('set_suggfocus').appendChild(o);});
-    $('set_suggfocus').value=s.suggestions_focus_customer||"";
-  }
+  if($('set_guard'))$('set_guard').checked=!!s.guardrails_enabled;
   const br=await api('get_brain_rules')||{};
   if($('set_rules'))$('set_rules').value=br.text||"";
   if($('rules_path'))$('rules_path').textContent=br.path||"";
@@ -782,17 +1215,10 @@ async function openManual(){
 async function saveSettings(){
   const pin=$('set_pin')?$('set_pin').value.trim():"";
   if(pin&&!/^\d{6}$/.test(pin)){toast('System PIN must be exactly 6 digits');return;}
-  const data={trip_report_recipients:$('set_to').value.trim(),
-              email_signature:$('set_sig').value.trim(),
-              auto_email_trip_reports:$('set_auto').checked,
-              show_chrome_windows:$('set_showchrome')?$('set_showchrome').checked:false,
-              system_pin:pin,
+  const data={system_pin:pin,
               timezone:$('set_tz')?$('set_tz').value:'America/New_York',
-              continual_suggestions:$('set_sugg')?$('set_sugg').checked:true,
-              suggestions_ai:$('set_suggai')?$('set_suggai').checked:true,
-              suggestions_workhours_only:$('set_suggwh')?$('set_suggwh').checked:true,
-              suggestions_frequency_min:$('set_suggfreq')?parseInt($('set_suggfreq').value,10)||60:60,
-              suggestions_focus_customer:$('set_suggfocus')?$('set_suggfocus').value:""};
+              guardrails_enabled:$('set_guard')?$('set_guard').checked:false,
+              continual_suggestions:false};
   await api('save_settings',{data});
   const m=$('set_msg');if(m){m.textContent='✓ Saved';setTimeout(()=>m.textContent='',1800);}
   toast('Settings saved');
@@ -805,7 +1231,7 @@ async function showCrons(){
   const crons=await api('get_crons')||[];
   const inp='width:100%;background:#0c121b;border:1px solid #202a3a;border-radius:8px;color:#e6edf3;font:inherit;font-size:14px;padding:11px 12px';
   let h=`<div class="scrollview fade"><div class="h1">⏰ Cron Jobs</div>
-    <div class="muted" style="margin:-4px 0 14px;font-size:12px">Tell ATLAS to do something on a schedule. When it fires, the instruction runs through the brain — just like typing it in the command box. Fires while ATLAS is open, in your <a style="color:#56d4dd;cursor:pointer" onclick="showSettings()">Settings timezone</a>.</div>
+    <div class="muted" style="margin:-4px 0 14px;font-size:12px">Tell Account Technology Profiler to do something on a schedule. When it fires, the instruction runs through the brain — just like typing it in the command box. Fires while Account Technology Profiler is open, in your <a style="color:#56d4dd;cursor:pointer" onclick="showSettings()">Settings timezone</a>.</div>
     <section class="bpanel" style="max-width:760px">
       <h2>➕ New scheduled job</h2>
       <label style="font-size:12px;color:#8b949e">Instruction</label>
@@ -922,19 +1348,37 @@ async function pinDeleteConfirm(){
 }
 function deleteCustomerPrompt(name){
   pinDeleteModal(`Delete ${esc(name)}?`,
-    `This moves the entire customer folder — trip reports, profiles, diagrams, every generation — into the <b>recycle bin</b>. It disappears from ATLAS but is not erased; restore it from <code>vault/recyclebin</code>.`,
+    `This moves the entire customer folder — trip reports, profiles, diagrams, every generation — into the <b>recycle bin</b>. It disappears from Account Technology Profiler but is not erased; restore it from <code>vault/recyclebin</code>.`,
     async pin=>{const r=await api('delete_customer',{name,pin});
       if(r&&r.ok){toast('🗑 '+name+' moved to recycle bin');showCustomers();}return r;});
 }
 function deleteArtifactPrompt(id,label){
   pinDeleteModal(`Delete this artifact?`,
-    `<b>${esc(label)}</b><br>This moves the artifact and its files into the <b>recycle bin</b>. It disappears from ATLAS but is not erased; restore it from <code>vault/recyclebin/artifacts</code>.`,
+    `<b>${esc(label)}</b><br>This moves the artifact and its files into the <b>recycle bin</b>. It disappears from Account Technology Profiler but is not erased; restore it from <code>vault/recyclebin/artifacts</code>.`,
     async pin=>{const r=await api('delete_artifact',{id,pin});
       if(r&&r.ok){toast('🗑 Moved to recycle bin');
         if(VIEW==='brainwaves')showBrainwaves();
         else if(VIEW==='artifacts'){ARTS=await api('artifacts')||[];showArtifacts();}
         else if(VIEW==='home')refreshConsole(); else showHome();}
       return r;});
+}
+function deleteVisionPrompt(customer,ts,label){
+  pinDeleteModal(`Delete this vision board?`,
+    `<b>${esc(label||'Vision board')}</b><br>Moves both Excel inputs and the generated diagram into the <b>recycle bin</b>. It disappears from Account Technology Profiler but is not erased; restore it from <code>vault/recyclebin/vision</code>.`,
+    async pin=>{const r=await api('sedraw_vision_delete',{customer,ts,pin});
+      if(r&&r.ok){toast('🗑 Vision board moved to recycle bin');showVisionStudio(customer);}return r;});
+}
+function deleteNetworkPrompt(customer,filename){
+  pinDeleteModal(`Delete this network diagram?`,
+    `<b>${esc(filename)}</b><br>Moves the Excel input and any generated diagram into the <b>recycle bin</b>. It disappears from Account Technology Profiler but is not erased; restore it from <code>vault/recyclebin/network</code>.`,
+    async pin=>{const r=await api('sedraw_network_delete',{customer,filename,pin});
+      if(r&&r.ok){toast('🗑 Network diagram moved to recycle bin');sedrawCustomer('network',customer);}return r;});
+}
+function deleteGenerationPrompt(customer,gen_id,label){
+  pinDeleteModal(`Delete this generation?`,
+    `<b>${esc(label)}</b><br>Moves this topology generation snapshot into the <b>recycle bin</b>. It disappears from Account Technology Profiler but is not erased; restore it from <code>vault/recyclebin/generations</code>.`,
+    async pin=>{const r=await api('delete_generation',{customer,gen_id,pin});
+      if(r&&r.ok){toast('🗑 Generation moved to recycle bin');showCustomer(customer);}return r;});
 }
 /* ---------- PEOPLE RESOURCES (CSV-backed resource directory) ---------- */
 let PEOPLE=[], PFILTER='', PCAT='Engineer';
@@ -1060,7 +1504,9 @@ async function showCustomer(name){
   const d=await api('customer',{name}); if(!d)return;
   ATPGEN={customer:name,id:'current',topo:'',uri:''};
   const labels={artifacts:'🗂 Artifacts',account_technology_profile:'🧩 Account Technology Profile',
-                network_diagrams:'🗺 Network Diagrams',trip_reports:'🧾 Trip Reports'};
+                network_diagrams:'🗺 Network Diagrams',trip_reports:'🧾 Trip Reports',
+                network_input:'📥 SEdraw Network Input',network_output:'🛰 SEdraw Network Output',
+                vision_input:'📥 SEdraw Vision Input',vision_output:'🧭 SEdraw Vision Output'};
   let h=`<div class="scrollview fade"><div class="crumb"><a style="cursor:pointer;color:#56d4dd" onclick="showCustomers()">← Vault</a></div>
     <div class="h1">📁 ${esc(d.name)}</div><div class="crumb">${esc(d.path)}</div>
     <div style="margin:6px 0 4px;display:flex;gap:8px;flex-wrap:wrap">
@@ -1073,7 +1519,7 @@ async function showCustomer(name){
     const files=(d.folders&&d.folders[sub])||[];
     h+=`<section class="bpanel" style="margin-top:12px"><h2>${labels[sub]} <span class="muted">(${files.length})</span></h2>`;
     if(!files.length)h+=`<div class="empty">empty</div>`;
-    files.forEach(f=>{const open=f.artifact_id?`openArtifact(${JSON.stringify(f.artifact_id)})`:`openDiagram(${JSON.stringify(f.uri)})`;
+    files.forEach(f=>{const open=f.artifact_id?`openArtifact(${JSON.stringify(f.artifact_id)})`:`openVaultFile(${JSON.stringify(f.uri)},${JSON.stringify(f.name)})`;
       h+=`<div class="mini" onclick='${open}'><div class="mt"><span>${f.artifact_id?'🧾':'📄'}</span>${esc(f.name)}</div></div>`;});
     h+=`</section>`;
   });
@@ -1093,10 +1539,13 @@ function renderGenPicker(gens,sel){
     <div class="muted" style="margin:-2px 0 8px;font-size:12px">Each ✨ Generate is saved as a dated snapshot — click one to view its overview, contacts &amp; topology.</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">`;
   gens.forEach(g=>{const on=g.id===sel;
-    h+=`<div class="bcard" style="cursor:pointer;min-width:150px${on?';border-color:#56d4dd;box-shadow:0 0 0 1px #56d4dd inset':''}"
+    const del=g.id&&g.id!=='current'
+      ? `<span title="Delete this generation" onclick='event.stopPropagation();deleteGenerationPrompt(${JSON.stringify(ATPGEN.customer)},${JSON.stringify(g.id)},${JSON.stringify(g.created_display||g.id)})' style="position:absolute;top:6px;right:8px;color:#7d8a98;cursor:pointer">🗑</span>`
+      : '';
+    h+=`<div class="bcard" style="position:relative;cursor:pointer;min-width:150px${on?';border-color:#56d4dd;box-shadow:0 0 0 1px #56d4dd inset':''}"
       onclick='loadProfile(${JSON.stringify(ATPGEN.customer)},${JSON.stringify(g.id)})'>
       <div class="bt">${on?'✓ ':''}${esc(g.created_display||g.id)}</div>
-      <div class="bsub">${g.techs||0} tech · ${g.contacts||0} contacts${g.has_overview?'':' · no overview'}</div></div>`;});
+      <div class="bsub">${g.techs||0} tech · ${g.contacts||0} contacts${g.has_overview?'':' · no overview'}</div>${del}</div>`;});
   return h+`</div></section>`;
 }
 function showSelectedTopology(){ showTopology(ATPGEN.customer, ATPGEN.topo, ATPGEN.uri); }

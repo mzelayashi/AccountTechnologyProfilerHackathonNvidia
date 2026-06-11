@@ -40,13 +40,20 @@ class Api:
     def manager(self):
         return get_manager()
 
+    # Skills hidden from the Skills page for the Nemotron demo — they were Copilot/M365-grounded and
+    # add clutter when Copilot isn't part of this iteration. They stay REGISTERED (the brain can still
+    # dispatch them by key); they're just not shown as buttons.
+    _HIDDEN_SKILLS = {"daily_briefing", "knowledge_drop", "meeting_prep", "account_360",
+                      "follow_up", "whitespace", "battlecard", "trip_report", "ask",
+                      "find_resource", "strategic_briefing", "environment_topology"}
+
     # ---- metadata ----
     def skills(self) -> list[dict]:
         return [{
             "key": s.key, "name": s.name, "icon": s.icon, "description": s.description,
             "inputs": [{"key": f.key, "label": f.label, "placeholder": f.placeholder}
                        for f in s.inputs],
-        } for s in all_skills()]
+        } for s in all_skills() if s.key not in self._HIDDEN_SKILLS]
 
     def greeting(self) -> dict:
         return {"greeting": _greeting(), "date": _today()}
@@ -103,6 +110,9 @@ class Api:
 
     # ---- boot: gather yesterday + today + tomorrow as 3 parallel jobs ----
     def boot(self) -> dict:
+        import os
+        if os.getenv("ATLAS_COPILOT_DISABLED") == "1":
+            return {"ids": {}}            # engine disabled — don't spawn calendar-gather (Chrome) jobs
         ids = {}
         for kind in ("yesterday", "today", "tomorrow"):
             date = _date_for(kind)
@@ -124,6 +134,9 @@ class Api:
     def refresh_day(self, kind: str = "today") -> dict:
         """Re-gather one day from Copilot (the ↻ Refresh button) — Copilot's calendar grounding is
         occasionally flaky, so this re-queries and overwrites that day if it grounds."""
+        import os
+        if os.getenv("ATLAS_COPILOT_DISABLED") == "1":
+            return {"disabled": True}     # engine disabled — no Chrome re-gather
         kind = kind if kind in ("yesterday", "today", "tomorrow") else "today"
         date = _date_for(kind)
         label = {"yesterday": "Yesterday", "today": "Today", "tomorrow": "Tomorrow"}[kind]
@@ -137,6 +150,14 @@ class Api:
         text = (text or "").strip()
         if not text:
             return {"ids": [], "routed": []}
+        # Guardrails input rail (off by default; fail-open — never blocks legit work on error).
+        try:
+            from atlas.brain import guardrails
+            allowed, refusal = guardrails.check_input(text)
+            if not allowed:
+                return {"ids": [], "routed": [], "blocked": True, "message": refusal}
+        except Exception:  # noqa: BLE001 — guardrails must never take down the command box
+            pass
         jid = self.manager.submit("brain_route", {"text": text},
                                   title=f"🧠 {text[:48]}", icon="🧠", mode="web")
         return {"ids": [jid], "routed": ["ATLAS is thinking…"]}
@@ -180,16 +201,38 @@ class Api:
         from atlas.store import artifacts
         return artifacts.get(id)
 
-    def delete_artifact(self, id: str = "", pin: str = "") -> dict:
-        """Soft-delete an artifact (move its files to the recycle bin). PIN-guarded like customers."""
-        from atlas.store import artifacts, settings
+    @staticmethod
+    def _pin_ok(pin: str) -> dict | None:
+        """Shared System-PIN gate for every soft-delete. Returns an error dict to abort, or None to
+        proceed (same contract the frontend pinDeleteModal expects: no_pin / bad_pin messages)."""
+        from atlas.store import settings
         saved = (settings.load().get("system_pin") or "").strip()
         if not saved:
             return {"ok": False, "error": "no_pin",
                     "message": "Set a 6-digit System PIN in Settings before deleting anything."}
         if (pin or "").strip() != saved:
             return {"ok": False, "error": "bad_pin", "message": "Incorrect System PIN."}
-        return artifacts.delete(id)
+        return None
+
+    def delete_artifact(self, id: str = "", pin: str = "") -> dict:
+        """Soft-delete an artifact (move its files to the recycle bin). PIN-guarded like customers."""
+        from atlas.store import artifacts
+        return self._pin_ok(pin) or artifacts.delete(id)
+
+    def delete_generation(self, customer: str = "", gen_id: str = "", pin: str = "") -> dict:
+        """Soft-delete one ATP/topology generation snapshot → recycle bin. PIN-guarded."""
+        from atlas.atp import generations
+        return self._pin_ok(pin) or generations.delete_generation(customer, gen_id)
+
+    def sedraw_vision_delete(self, customer: str = "", ts: str = "", pin: str = "") -> dict:
+        """Soft-delete a saved vision board (inputs + diagram) → recycle bin. PIN-guarded."""
+        from atlas.sedraw import service
+        return self._pin_ok(pin) or service.vision_delete(customer, ts)
+
+    def sedraw_network_delete(self, customer: str = "", filename: str = "", pin: str = "") -> dict:
+        """Soft-delete a network diagram (input + generated diagram) → recycle bin. PIN-guarded."""
+        from atlas.sedraw import service
+        return self._pin_ok(pin) or service.network_delete(customer, filename)
 
     # ---- customer vault ----
     def customers(self) -> list:
@@ -207,6 +250,92 @@ class Api:
     def assign_artifact(self, artifact_id: str = "", customer: str = "") -> dict:
         from atlas.store import customers
         return customers.assign_artifact(artifact_id, customer)
+
+    # ---- local AI engine status (NVIDIA Nemotron via vLLM / NIM) ----
+    def engine_status(self) -> dict:
+        """Live status of the local inference engine — model id, context window, reachability.
+        Powers the About page's 'powered by Nemotron' panel and shows demo-day readiness."""
+        try:
+            from atlas.engine import nemotron
+            h = nemotron.health()
+        except Exception as e:  # noqa: BLE001
+            h = {"ok": False, "error": str(e)}
+        h["engine"] = "nemotron-local"
+        return h
+
+    # ---- SE Draw diagram skills (synchronous; no Copilot/job needed) ----
+    def sedraw_customers(self) -> list:
+        from atlas.sedraw import service
+        return service.list_customers()
+
+    def sedraw_inputs(self, customer: str = "", kind: str = "") -> list:
+        from atlas.sedraw import service
+        return service.inputs(customer, kind)
+
+    def sedraw_upload(self, customer: str = "", kind: str = "",
+                      filename: str = "", data_b64: str = "") -> dict:
+        from atlas.sedraw import service
+        return service.save_upload(customer, kind, filename, data_b64)
+
+    def sedraw_generate_network(self, customer: str = "", filename: str = "") -> dict:
+        from atlas.sedraw import service
+        return service.generate_network(customer, filename)
+
+    def sedraw_load_network(self, customer: str = "", filename: str = "") -> dict:
+        from atlas.sedraw import service
+        return service.load_network(customer, filename)
+
+    def sedraw_new_network(self, customer: str = "") -> dict:
+        from atlas.sedraw import service
+        return service.new_network_template(customer)
+
+    def sedraw_convert_docx(self, customer: str = "", filename: str = "", data_b64: str = "") -> dict:
+        """Convert a Word (.docx) intake → network map as a background JOB (Nemotron parse + generate)."""
+        jid = self.manager.submit(
+            "docx_network",
+            {"customer": customer, "filename": filename, "data_b64": data_b64},
+            title=f"DOCX → Network — {customer}"[:80], icon="📄")
+        return {"id": jid}
+
+    def sedraw_save_network(self, customer: str = "", filename: str = "",
+                            data: dict | None = None) -> dict:
+        from atlas.sedraw import service
+        return service.save_network(customer, filename, data)
+
+    def sedraw_generate_vision(self, customer: str = "", filename: str = "") -> dict:
+        from atlas.sedraw import service
+        return service.generate_vision(customer, filename)
+
+    # ---- Vision Studio (free-form text → Nemotron → combined diagram + history + editor) ----
+    def sedraw_vision_generate(self, customer: str = "", current_text: str = "",
+                               future_text: str = "") -> dict:
+        from atlas.sedraw import service
+        return service.vision_generate(customer, current_text, future_text)
+
+    def sedraw_vision_submit(self, customer: str = "", current_text: str = "",
+                             future_text: str = "") -> dict:
+        """Run vision generation as a background JOB (shows in the tasks bar + creates an artifact)."""
+        jid = self.manager.submit(
+            "vision_generate",
+            {"customer": customer, "current_text": current_text, "future_text": future_text},
+            title=f"Vision Board — {customer}"[:80], icon="🧭")
+        return {"id": jid}
+
+    def sedraw_vision_sessions(self, customer: str = "") -> list:
+        from atlas.sedraw import service
+        return service.vision_sessions(customer)
+
+    def sedraw_vision_load(self, customer: str = "", ts: str = "") -> dict:
+        from atlas.sedraw import service
+        return service.vision_load(customer, ts)
+
+    def sedraw_vision_save(self, customer: str = "", ts: str = "", data: dict | None = None) -> dict:
+        from atlas.sedraw import service
+        return service.vision_save(customer, ts, data)
+
+    def sedraw_vision_view(self, customer: str = "", ts: str = "") -> dict:
+        from atlas.sedraw import service
+        return service.vision_view(customer, ts)
 
     def delete_customer(self, name: str = "", pin: str = "") -> dict:
         """Soft-delete a customer (move its folder to the recycle bin). Requires the System PIN set

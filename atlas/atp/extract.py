@@ -262,6 +262,119 @@ def _dump_raw(customer: str, tech_a: str, ov_a: str, ct_a: str) -> None:
         pass
 
 
+def _synthesize_overview(ask, customer: str, per_chunk: list[dict]) -> dict:
+    """Reduce step for the overview: merge the per-chunk overview JSONs into one (a small prompt
+    that fits any window). Keeps OVERVIEW_PROMPT's schema."""
+    import json
+    blob = json.dumps(per_chunk, ensure_ascii=False)[:12000]
+    prompt = (f"Below are partial technology-overview notes for {customer}, each a JSON object "
+              "extracted from different sections of their trip reports:\n\n" + blob + "\n\n"
+              "Merge them into ONE consolidated overview. Reply with a JSON object (no code fences) "
+              'with exactly these keys, each a 3-4 sentence paragraph specific to this customer '
+              '(name real vendors, projects, scale — no generic filler): '
+              '{"workloads_hosting": "...", "applications_systems": "...", "business_operations": "..."}.')
+    return _parse_overview(ask(prompt))
+
+
+def generate_local(ask, customer: str, log=print) -> dict:
+    """Map-reduce ATP generation for a finite-context LOCAL model (Nemotron). SAME prompts, parsing,
+    merge, recency, persistence and snapshot as generate() — only the *feeding* differs: instead of
+    one accumulating conversation (impossible under a local context window), extract per chunk and
+    merge. `ask(prompt:str)->str` is a stateless single completion (e.g. nemotron.complete)."""
+    import concurrent.futures as cf
+    from atlas.engine import nemotron
+
+    text, n_files = _all_trip_text(customer)
+    if not text.strip():
+        return {"ok": False, "error": "No trip reports filed for this customer yet.",
+                "text": "No trip reports to read yet."}
+    # Size chunks to the live context window: leave room for the prompt + reasoning + JSON answer.
+    chunk_chars = max(6000, int(nemotron.context_window() * 1.2))
+    chunks = _chunks(text, size=chunk_chars)
+    log(f"Reading {n_files} trip report(s) in {len(chunks)} chunk(s) via local Nemotron "
+        f"(map-reduce, {nemotron.context_window()}-token window)…")
+
+    def _hdr(i, c):
+        return f"These are SHI account trip-report excerpts for {customer} (part {i + 1} of {len(chunks)}).\n\n{c}\n\n"
+
+    # MAP: run each chunk × each extraction prompt; concurrent (vLLM batches requests).
+    tasks = []
+    for i, c in enumerate(chunks):
+        h = _hdr(i, c)
+        tasks += [(i, "tech", h + TECH_PROMPT), (i, "overview", h + OVERVIEW_PROMPT),
+                  (i, "contacts", h + CONTACTS_PROMPT)]
+
+    def _run(t):
+        i, kind, prompt = t
+        try:
+            return (i, kind, ask(prompt))
+        except Exception as e:  # noqa: BLE001 — one bad pass shouldn't sink the whole run
+            log(f"  pass failed (chunk {i + 1}/{len(chunks)}, {kind}): {str(e)[:80]}")
+            return (i, kind, "")
+
+    results, done = {}, 0
+    with cf.ThreadPoolExecutor(max_workers=4) as ex:
+        for i, kind, ans in ex.map(_run, tasks):
+            results[(i, kind)] = ans
+            done += 1
+            if done % 3 == 0 or done == len(tasks):
+                log(f"  extracted {done}/{len(tasks)} passes…")
+
+    # REDUCE — technologies (concat per-chunk lists; _merge_techs dedupes + preserves manual)
+    all_techs = []
+    for i in range(len(chunks)):
+        d = extract_json(results.get((i, "tech"), ""))
+        if isinstance(d, dict):
+            d = d.get("technologies")
+        if isinstance(d, list):
+            all_techs.extend(d)
+    kept, gen = _merge_techs(customer, all_techs)
+    entries = data_library.load(customer)
+    recency.assign(customer, entries)
+    data_library.save(customer, entries)
+
+    # REDUCE — contacts
+    all_contacts = []
+    for i in range(len(chunks)):
+        d = extract_json(results.get((i, "contacts"), ""))
+        if isinstance(d, list):
+            all_contacts.extend(d)
+    generated_contacts = _clean_contacts(all_contacts, source="trip_reports")
+    n_added = _merge_contacts(customer, generated_contacts)
+
+    # REDUCE — overview (1 chunk → use it; many → synthesize across them)
+    per_overviews = [ov for i in range(len(chunks))
+                     if (ov := _parse_overview(results.get((i, "overview"), "")))]
+    if len(per_overviews) == 1:
+        overview_raw = per_overviews[0]
+    elif per_overviews:
+        log("  synthesizing overview across chunks…")
+        overview_raw = _synthesize_overview(ask, customer, per_overviews)
+    else:
+        overview_raw = {}
+    overview = _merge_overview(customer, overview_raw) if overview_raw else profile_store.load_overview(customer)
+
+    _dump_raw(customer, results.get((0, "tech"), ""), results.get((0, "overview"), ""),
+              results.get((0, "contacts"), ""))
+
+    uri = topology_html.write(customer)
+    final_entries = data_library.load(customer)
+    total = len(final_entries)
+    merged_contacts = profile_store.load_contacts(customer)
+    snap = generations.snapshot(customer, final_entries, overview, merged_contacts)
+    has_ov = any((overview or {}).get(k) for k in _OV_FIELDS)
+    log(f"{gen} technology(ies) from trip reports (+{kept} kept manual); +{n_added} new contact(s) "
+        f"(now {len(merged_contacts)}); overview {'yes' if has_ov else 'no'}. "
+        f"Saved as generation {snap['created_display']}.")
+    return {"ok": True, "generated": gen, "kept": kept, "total": total,
+            "contacts": len(merged_contacts), "overview": has_ov, "topology": uri,
+            "generation": snap["id"], "generation_label": snap["created_display"],
+            "text": f"Read {n_files} trip report(s) in {len(chunks)} chunk(s) via local Nemotron — "
+                    f"{total} technology(ies) in the profile, {len(merged_contacts)} key contact(s), "
+                    f"and a customer overview. Saved as generation {snap['created_display']}. "
+                    f"Open the customer to view it."}
+
+
 def generate(ask_chain_all, customer: str, log=print) -> dict:
     """`ask_chain_all(prompts)->list[answer]` must run in WEB mode. Feeds the trip reports in
     chunks across one conversation, then extracts technologies, overview, and contacts."""

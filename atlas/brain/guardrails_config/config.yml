@@ -1,0 +1,25 @@
+# NeMo Guardrails — ATLAS command-box input rail.
+# Runs on the LOCAL Nemotron (OpenAI-compatible vLLM/NIM endpoint). base_url is set here so the rail
+# never reaches the real OpenAI API. Input self-check ONLY — no embedding models / dialog flows, so it
+# stays light and fully offline. The refusal message is overridden in rails.co (so the app detects a block).
+models:
+  - type: main
+    engine: openai
+    model: Llama-3_3-Nemotron-Super-49B-v1_5
+    parameters:
+      base_url: http://localhost:8000/v1
+      api_key: dummy
+      temperature: 0.0
+      max_tokens: 40
+
+# Nemotron emits a <think> block by default, which would pollute the rail's yes/no answer. This system
+# instruction turns that off so the self-check returns a clean verdict.
+instructions:
+  - type: general
+    content: |
+      detailed thinking off
+
+rails:
+  input:
+    flows:
+      - self check input

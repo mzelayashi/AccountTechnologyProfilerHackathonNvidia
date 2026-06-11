@@ -7,11 +7,16 @@ from __future__ import annotations
 
 import json
 import mimetypes
+import urllib.parse
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 
+import config
+
 _WEB = Path(__file__).resolve().parent
 _LOADING = _WEB.parent / "loading"
+# File types served from the vault via GET /vaultfile (inline SE Draw diagram viewers, etc.)
+_VAULT_OK_EXT = {".html", ".drawio", ".svg", ".json", ".png", ".txt", ".md"}
 
 
 def make_handler(api):
@@ -57,10 +62,49 @@ def make_handler(api):
             self._raw(200, data, ctype, {"Accept-Ranges": "bytes"})
 
         # ---- routes ----
+        def _vaultfile(self):
+            # Serve a file from inside the vault, sandboxed to VAULT_DIR (no path escape).
+            qs = urllib.parse.urlparse(self.path).query
+            rel = urllib.parse.parse_qs(qs).get("p", [""])[0]
+            base = config.VAULT_DIR.resolve()
+            try:
+                target = (base / rel).resolve()
+            except Exception:
+                return self._raw(400, b"bad path", "text/plain")
+            if target != base and base not in target.parents:
+                return self._raw(403, b"forbidden", "text/plain")
+            if target.suffix.lower() not in _VAULT_OK_EXT:
+                return self._raw(403, b"forbidden type", "text/plain")
+            return self._file(target)
+
+        def _drawioview(self):
+            # Render a vault .drawio through the diagrams.net viewer (sandboxed to VAULT_DIR).
+            qs = urllib.parse.urlparse(self.path).query
+            rel = urllib.parse.parse_qs(qs).get("p", [""])[0]
+            base = config.VAULT_DIR.resolve()
+            try:
+                target = (base / rel).resolve()
+            except Exception:
+                return self._raw(400, b"bad path", "text/plain")
+            if target != base and base not in target.parents:
+                return self._raw(403, b"forbidden", "text/plain")
+            if target.suffix.lower() != ".drawio" or not target.is_file():
+                return self._raw(403, b"not a drawio", "text/plain")
+            from atlas.artifacts import diagram_view
+            try:
+                page = diagram_view.render_html(target.read_text(encoding="utf-8"), target.stem)
+            except Exception:
+                return self._raw(404, b"unreadable", "text/plain")
+            self._raw(200, page.encode("utf-8"), "text/html; charset=utf-8")
+
         def do_GET(self):
             path = self.path.split("?")[0]
             if path in ("/", "/index.html"):
                 return self._file(_WEB / "index.html")
+            if path == "/vaultfile":
+                return self._vaultfile()
+            if path == "/drawioview":
+                return self._drawioview()
             if path.startswith("/loading/"):
                 return self._file(_LOADING / Path(path).name)
             cand = _WEB / path.lstrip("/")

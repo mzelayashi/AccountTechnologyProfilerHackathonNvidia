@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-06-11T12:00:00.000Z" agent="Guardrails Architecture" version="22.1.0">
+  <diagram name="Guardrails Integration" id="guardrails-architecture">
+    <mxGraphModel dx="1800" dy="1300" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1120" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Background -->
+        <mxCell id="bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#0d1117;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="1700" height="1120" as="geometry"/>
+        </mxCell>
+
+        <!-- Title -->
+        <mxCell id="title" value="NeMo GUARDRAILS — INTEGRATION WITH ACCOUNT TECHNOLOGY PROFILER (ATLAS)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="300" y="16" width="1100" height="38" as="geometry"/>
+        </mxCell>
+        <mxCell id="subtitle" value="Input self-check rail on the command box  ·  runs on the local Nemotron model  ·  standalone control panel  ·  fail-open, OFF by default" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#8b949e;" vertex="1" parent="1">
+          <mxGeometry x="300" y="54" width="1100" height="24" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== APPLICATION ===== -->
+        <mxCell id="h-app" value="ACCOUNT TECHNOLOGY PROFILER (ATLAS) — the app" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontStyle=1;fontColor=#58a6ff;" vertex="1" parent="1">
+          <mxGeometry x="40" y="92" width="420" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="cmd" value="&lt;b&gt;Command Box&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;ATLAS UI · index.html&lt;/font&gt;&lt;hr&gt;&lt;font style=&quot;font-size:9px&quot;&gt;the natural-language prompt box&lt;br&gt;(Home → &quot;Ask … anything&quot;)&lt;br&gt;sendCmd() → POST /api/command&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a365d;strokeColor=#3182ce;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="40" y="118" width="210" height="118" as="geometry"/>
+        </mxCell>
+        <mxCell id="api" value="&lt;b&gt;Api.command()&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;atlas/web/api.py&lt;br&gt;POST /api/command&lt;br&gt;&lt;b&gt;calls the guardrail FIRST&lt;/b&gt;&lt;/font&gt;" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#234e52;strokeColor=#319795;fontColor=#ffffff;rounded=1;size=0.2;align=left;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="290" y="130" width="180" height="95" as="geometry"/>
+        </mxCell>
+        <mxCell id="brain" value="&lt;b&gt;The Brain — brain_route&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;only ALLOWED prompts reach here&lt;/font&gt;&lt;hr&gt;&lt;font style=&quot;font-size:9px&quot;&gt;routes → run skill · RAG ·&lt;br&gt;research · brainwave (multi-agent)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a365d;strokeColor=#3182ce;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="1180" y="118" width="300" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="refusal" value="&lt;b&gt;⛔ Refusal&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;a polite message is returned to the UI&lt;br&gt;&lt;b&gt;no job runs&lt;/b&gt; · the block is recorded to&lt;br&gt;the shared block log&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#5b2026;strokeColor=#f85149;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="1180" y="262" width="300" height="92" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== GUARDRAILS (the star) ===== -->
+        <mxCell id="h-guard" value="★ NeMo GUARDRAILS — input rail" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontStyle=1;fontColor=#a371f7;" vertex="1" parent="1">
+          <mxGeometry x="520" y="92" width="360" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="gate" value="&lt;b&gt;🛡 Input Rail — check_input()&lt;/b&gt;  ★&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;atlas/brain/guardrails.py&lt;/font&gt;&lt;hr&gt;&lt;font style=&quot;font-size:9px&quot;&gt;EVERY command passes through here first&lt;br&gt;&lt;b&gt;ALLOW&lt;/b&gt; → the Brain  ·  &lt;b&gt;BLOCK&lt;/b&gt; → refusal&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#553c9a;strokeColor=#b794f4;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="520" y="118" width="340" height="118" as="geometry"/>
+        </mxCell>
+        <mxCell id="engine" value="&lt;b&gt;Guardrail evaluation — 3 tiers&lt;/b&gt;&lt;hr&gt;&lt;font style=&quot;font-size:9px&quot;&gt;&lt;b&gt;1.&lt;/b&gt; deterministic denylist (blocked words) — instant&lt;br&gt;&lt;b&gt;2.&lt;/b&gt; NeMo Guardrails &lt;b&gt;LLMRails · &quot;self check input&quot;&lt;/b&gt; (primary)&lt;br&gt;&lt;b&gt;3.&lt;/b&gt; native Nemotron classifier (fallback)&lt;br&gt;&lt;br&gt;&lt;b&gt;fail-open&lt;/b&gt; (any error → allow)  ·  &lt;b&gt;OFF by default&lt;/b&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#553c9a;strokeColor=#805ad5;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="520" y="300" width="340" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="h-cfg" value="guardrails_config/" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=2;fontColor=#b794f4;" vertex="1" parent="1">
+          <mxGeometry x="520" y="498" width="200" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="cfg1" value="&lt;b&gt;config.yml&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:8px&quot;&gt;rails + model&lt;br&gt;(local Nemotron)&lt;/font&gt;" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#3b2c66;strokeColor=#805ad5;fontColor=#ffffff;rounded=1;size=0.2;" vertex="1" parent="1">
+          <mxGeometry x="520" y="518" width="108" height="64" as="geometry"/>
+        </mxCell>
+        <mxCell id="cfg2" value="&lt;b&gt;prompts.yml&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:8px&quot;&gt;self_check_input&lt;br&gt;(lever-driven)&lt;/font&gt;" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#3b2c66;strokeColor=#805ad5;fontColor=#ffffff;rounded=1;size=0.2;" vertex="1" parent="1">
+          <mxGeometry x="636" y="518" width="108" height="64" as="geometry"/>
+        </mxCell>
+        <mxCell id="cfg3" value="&lt;b&gt;rails.co&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:8px&quot;&gt;refusal&lt;br&gt;message&lt;/font&gt;" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#3b2c66;strokeColor=#805ad5;fontColor=#ffffff;rounded=1;size=0.2;" vertex="1" parent="1">
+          <mxGeometry x="752" y="518" width="108" height="64" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== LOCAL MODEL ENGINE ===== -->
+        <mxCell id="h-nem" value="LOCAL MODEL ENGINE" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontStyle=1;fontColor=#39d353;" vertex="1" parent="1">
+          <mxGeometry x="910" y="278" width="260" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="nemotron" value="&lt;b&gt;Local Nemotron-49B&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;vLLM · 2× H100 (TP=2)&lt;br&gt;OpenAI-compatible · :8000&lt;br&gt;&lt;br&gt;runs the rails self-check&lt;br&gt;&amp; the native fallback&lt;/font&gt;" style="ellipse;shape=cloud;whiteSpace=wrap;html=1;fillColor=#22543d;strokeColor=#38a169;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="910" y="306" width="250" height="150" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== SHARED STATE ===== -->
+        <mxCell id="h-store" value="SHARED STATE (vault/)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontStyle=1;fontColor=#f85149;" vertex="1" parent="1">
+          <mxGeometry x="40" y="300" width="240" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="set" value="&lt;b&gt;settings.json&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;guardrails levers:&lt;br&gt;enabled · categories · strictness&lt;br&gt;blocked words · blocked domains&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#2d3748;strokeColor=#c53030;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="40" y="326" width="210" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="blocks" value="&lt;b&gt;guardrails_blocks.json&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;shared block log&lt;br&gt;written by the app · read by the panel&lt;br&gt;(cross-process)&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#2d3748;strokeColor=#c53030;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="40" y="452" width="210" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== CONTROL PANEL (separate process) ===== -->
+        <mxCell id="h-panel" value="STANDALONE CONTROL PANEL — its own process" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontStyle=1;fontColor=#56d4dd;" vertex="1" parent="1">
+          <mxGeometry x="520" y="610" width="560" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="panel" value="&lt;b&gt;🛡 Guardrails Control Panel&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;guardrails_panel.py · http://localhost:8090 · Desktop shortcut&lt;/font&gt;&lt;hr&gt;&lt;font style=&quot;font-size:9px&quot;&gt;&lt;b&gt;Separate process — closing it cannot affect ATLAS.&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;Levers:&lt;/b&gt; master on/off · 🎯 keep on-topic · 🚫 block unsafe ·&lt;br&gt;🛡 block prompt-injection · strictness (lenient/balanced/strict) ·&lt;br&gt;🚫 blocked words · 🌐 blocked research sources&lt;br&gt;&lt;b&gt;Live Test box&lt;/b&gt; → ALLOW / REFUSE + reason + engine&lt;br&gt;&lt;b&gt;Recent blocks&lt;/b&gt; (auto-refreshes every 4s)  ·  💾 Save settings&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0e4f59;strokeColor=#56d4dd;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="520" y="636" width="470" height="240" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== RESEARCH AGENT ===== -->
+        <mxCell id="h-research" value="RESEARCH / TOOLS" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontStyle=1;fontColor=#39d353;" vertex="1" parent="1">
+          <mxGeometry x="1180" y="610" width="300" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="research" value="&lt;b&gt;🌐 Research agent&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;atlas/engine/websearch.py&lt;/font&gt;&lt;hr&gt;&lt;font style=&quot;font-size:9px&quot;&gt;web search for the research &amp; brainwave agents&lt;br&gt;&lt;b&gt;skips Guardrails-blocked domains&lt;/b&gt;&lt;br&gt;(reads blocked_domains from settings)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#22543d;strokeColor=#38a169;fontColor=#ffffff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=5;" vertex="1" parent="1">
+          <mxGeometry x="1180" y="636" width="300" height="120" as="geometry"/>
+        </mxCell>
+
+        <!-- ================= ARROWS ================= -->
+        <!-- request path -->
+        <mxCell id="e1" value="POST /api/command" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#3182ce;strokeWidth=2;endArrow=classic;fontColor=#8b949e;fontSize=9;" edge="1" parent="1" source="cmd" target="api"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" value="check_input(text)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#319795;strokeWidth=2;endArrow=classic;fontColor=#8b949e;fontSize=9;" edge="1" parent="1" source="api" target="gate"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" value="evaluate ⇄ verdict" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#b794f4;strokeWidth=2;endArrow=classic;startArrow=classic;fontColor=#b794f4;fontSize=9;" edge="1" parent="1" source="gate" target="engine"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" value="ALLOW" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#39d353;strokeWidth=2;endArrow=classic;fontColor=#56d364;fontSize=10;fontStyle=1;" edge="1" parent="1" source="gate" target="brain"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" value="BLOCK" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#f85149;strokeWidth=2;endArrow=classic;fontColor=#f85149;fontSize=10;fontStyle=1;" edge="1" parent="1" source="gate" target="refusal"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- engine → model / config -->
+        <mxCell id="e6" value="self-check · classify" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#38a169;strokeWidth=2;endArrow=classic;fontColor=#56d364;fontSize=9;" edge="1" parent="1" source="engine" target="nemotron"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e7" value="loads" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#805ad5;strokeWidth=2;endArrow=classic;dashed=1;fontColor=#b794f4;fontSize=9;" edge="1" parent="1" source="engine" target="cfg2"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- engine ↔ stores -->
+        <mxCell id="e8" value="reads levers" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#c53030;strokeWidth=2;endArrow=classic;dashed=1;fontColor=#f85149;fontSize=9;" edge="1" parent="1" source="engine" target="set"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e9" value="records block" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#c53030;strokeWidth=2;endArrow=classic;fontColor=#f85149;fontSize=9;" edge="1" parent="1" source="engine" target="blocks">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="400" y="420"/><mxPoint x="400" y="502"/></Array></mxGeometry>
+        </mxCell>
+
+        <!-- panel ↔ shared state + engine -->
+        <mxCell id="e10" value="read / write levers" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#56d4dd;strokeWidth=2;endArrow=classic;startArrow=classic;dashed=1;fontColor=#56d4dd;fontSize=9;" edge="1" parent="1" source="panel" target="set">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="300" y="756"/><mxPoint x="300" y="500"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e11" value="reads (live poll 4s)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#56d4dd;strokeWidth=2;endArrow=classic;dashed=1;fontColor=#56d4dd;fontSize=9;" edge="1" parent="1" source="blocks" target="panel">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="360" y="660"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e12" value="test() — same engine" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#805ad5;strokeWidth=2;endArrow=classic;dashed=1;fontColor=#b794f4;fontSize=9;" edge="1" parent="1" source="panel" target="engine"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- settings → research (blocked domains) -->
+        <mxCell id="e13" value="blocked_domains" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#c53030;strokeWidth=2;endArrow=classic;dashed=1;fontColor=#f85149;fontSize=9;" edge="1" parent="1" source="set" target="research">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="145" y="590"/><mxPoint x="1130" y="590"/></Array></mxGeometry>
+        </mxCell>
+
+        <!-- ================= LEGEND ================= -->
+        <mxCell id="legend-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#161b22;strokeColor=#30363d;opacity=95;" vertex="1" parent="1">
+          <mxGeometry x="1180" y="790" width="330" height="230" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-title" value="&lt;b&gt;LEGEND&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="1180" y="798" width="330" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="lg1" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a365d;strokeColor=#3182ce;" vertex="1" parent="1"><mxGeometry x="1195" y="828" width="20" height="14" as="geometry"/></mxCell>
+        <mxCell id="lg1t" value="ATLAS app (UI · Brain)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#c9d1d9;" vertex="1" parent="1"><mxGeometry x="1222" y="826" width="240" height="18" as="geometry"/></mxCell>
+        <mxCell id="lg2" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#553c9a;strokeColor=#b794f4;" vertex="1" parent="1"><mxGeometry x="1195" y="850" width="20" height="14" as="geometry"/></mxCell>
+        <mxCell id="lg2t" value="NeMo Guardrails rail + engine ★" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#c9d1d9;" vertex="1" parent="1"><mxGeometry x="1222" y="848" width="240" height="18" as="geometry"/></mxCell>
+        <mxCell id="lg3" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3b2c66;strokeColor=#805ad5;" vertex="1" parent="1"><mxGeometry x="1195" y="872" width="20" height="14" as="geometry"/></mxCell>
+        <mxCell id="lg3t" value="Guardrails config (YAML / Colang)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#c9d1d9;" vertex="1" parent="1"><mxGeometry x="1222" y="870" width="260" height="18" as="geometry"/></mxCell>
+        <mxCell id="lg4" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#22543d;strokeColor=#38a169;" vertex="1" parent="1"><mxGeometry x="1195" y="894" width="20" height="14" as="geometry"/></mxCell>
+        <mxCell id="lg4t" value="Local Nemotron model · Research" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#c9d1d9;" vertex="1" parent="1"><mxGeometry x="1222" y="892" width="260" height="18" as="geometry"/></mxCell>
+        <mxCell id="lg5" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0e4f59;strokeColor=#56d4dd;" vertex="1" parent="1"><mxGeometry x="1195" y="916" width="20" height="14" as="geometry"/></mxCell>
+        <mxCell id="lg5t" value="Standalone control panel (own process)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#c9d1d9;" vertex="1" parent="1"><mxGeometry x="1222" y="914" width="270" height="18" as="geometry"/></mxCell>
+        <mxCell id="lg6" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2d3748;strokeColor=#c53030;" vertex="1" parent="1"><mxGeometry x="1195" y="938" width="20" height="14" as="geometry"/></mxCell>
+        <mxCell id="lg6t" value="Shared state (settings · block log)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#c9d1d9;" vertex="1" parent="1"><mxGeometry x="1222" y="936" width="260" height="18" as="geometry"/></mxCell>
+        <mxCell id="lg7" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#5b2026;strokeColor=#f85149;" vertex="1" parent="1"><mxGeometry x="1195" y="960" width="20" height="14" as="geometry"/></mxCell>
+        <mxCell id="lg7t" value="Refusal (blocked request)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#c9d1d9;" vertex="1" parent="1"><mxGeometry x="1222" y="958" width="240" height="18" as="geometry"/></mxCell>
+        <mxCell id="lg8t" value="dashed = config / secondary flow  ·  ★ = the guardrail" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=10;fontColor=#8b949e;" vertex="1" parent="1"><mxGeometry x="1195" y="984" width="300" height="18" as="geometry"/></mxCell>
+
+        <!-- Footer -->
+        <mxCell id="footer" value="NeMo Guardrails on ATLAS  ·  2026-06-11  ·  input self-check rail on the command box  ·  real NeMo Guardrails on local Nemotron + native fallback  ·  fail-open, off by default  ·  standalone control panel + shared cross-process block log" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#6e7681;" vertex="1" parent="1">
+          <mxGeometry x="120" y="1086" width="1460" height="20" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

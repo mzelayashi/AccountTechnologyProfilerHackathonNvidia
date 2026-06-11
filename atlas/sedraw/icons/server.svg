@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 50">
+  <!-- 2U rack server chassis -->
+  <rect x="4" y="8" width="72" height="34" rx="3" fill="#2d3436" stroke="#636e72" stroke-width="1.5"/>
+  <!-- Top bezel line -->
+  <line x1="8" y1="14" x2="72" y2="14" stroke="#4a6572" stroke-width="0.5"/>
+  <!-- Drive bays (front) -->
+  <rect x="10" y="17" width="8" height="6" rx="1" fill="#1e272e" stroke="#4a6572" stroke-width="0.6"/>
+  <rect x="20" y="17" width="8" height="6" rx="1" fill="#1e272e" stroke="#4a6572" stroke-width="0.6"/>
+  <rect x="30" y="17" width="8" height="6" rx="1" fill="#1e272e" stroke="#4a6572" stroke-width="0.6"/>
+  <rect x="40" y="17" width="8" height="6" rx="1" fill="#1e272e" stroke="#4a6572" stroke-width="0.6"/>
+  <!-- Ventilation holes -->
+  <rect x="10" y="28" width="38" height="8" rx="1" fill="#1e272e" stroke="#4a6572" stroke-width="0.3"/>
+  <line x1="16" y1="29" x2="16" y2="35" stroke="#4a6572" stroke-width="0.3"/>
+  <line x1="22" y1="29" x2="22" y2="35" stroke="#4a6572" stroke-width="0.3"/>
+  <line x1="28" y1="29" x2="28" y2="35" stroke="#4a6572" stroke-width="0.3"/>
+  <line x1="34" y1="29" x2="34" y2="35" stroke="#4a6572" stroke-width="0.3"/>
+  <line x1="40" y1="29" x2="40" y2="35" stroke="#4a6572" stroke-width="0.3"/>
+  <!-- Power/status panel (right) -->
+  <rect x="56" y="17" width="14" height="18" rx="1" fill="#1e272e" stroke="#4a6572" stroke-width="0.5"/>
+  <!-- Green power LED -->
+  <circle cx="60" cy="21" r="2" fill="#00b894"/>
+  <!-- ID button -->
+  <circle cx="67" cy="21" r="2" fill="#0984e3"/>
+  <!-- Status indicator -->
+  <rect x="59" y="27" width="8" height="2" rx="0.5" fill="#636e72"/>
+</svg>

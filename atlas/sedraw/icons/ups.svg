@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 50">
+  <rect x="2" y="5" width="76" height="40" rx="3" fill="#1b5e20" stroke="#4caf50" stroke-width="1.5"/>
+  <rect x="20" y="12" width="20" height="28" rx="2" fill="#2e7d32" stroke="#66bb6a" stroke-width="1"/>
+  <rect x="24" y="15" width="12" height="6" rx="1" fill="#43a047"/>
+  <rect x="24" y="23" width="12" height="6" rx="1" fill="#43a047"/>
+  <rect x="24" y="31" width="12" height="6" rx="1" fill="#388e3c"/>
+  <polygon points="54,12 60,25 56,25 62,38 55,28 59,28 52,15" fill="#ffeb3b" stroke="#f9a825" stroke-width="0.5"/>
+  <circle cx="70" cy="16" r="3" fill="#4caf50"/>
+  <text x="70" y="18" font-family="Arial,sans-serif" font-size="5" fill="#e8f5e9" text-anchor="middle">ON</text>
+  <text x="70" y="38" font-family="Arial,sans-serif" font-size="5" fill="#81c784" text-anchor="middle">UPS</text>
+</svg>

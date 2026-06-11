@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 50">
+  <!-- Dark chassis -->
+  <rect x="4" y="4" width="72" height="42" rx="3" fill="#2d3436" stroke="#636e72" stroke-width="1.5"/>
+  <!-- Drive bay slots -->
+  <rect x="10" y="9" width="6" height="32" rx="1" fill="#1e272e" stroke="#4a6572" stroke-width="0.8"/>
+  <rect x="19" y="9" width="6" height="32" rx="1" fill="#1e272e" stroke="#4a6572" stroke-width="0.8"/>
+  <rect x="28" y="9" width="6" height="32" rx="1" fill="#1e272e" stroke="#4a6572" stroke-width="0.8"/>
+  <rect x="37" y="9" width="6" height="32" rx="1" fill="#1e272e" stroke="#4a6572" stroke-width="0.8"/>
+  <rect x="46" y="9" width="6" height="32" rx="1" fill="#1e272e" stroke="#4a6572" stroke-width="0.8"/>
+  <rect x="55" y="9" width="6" height="32" rx="1" fill="#1e272e" stroke="#4a6572" stroke-width="0.8"/>
+  <!-- Blue LED indicators -->
+  <circle cx="12" cy="40" r="1.5" fill="#0984e3"/>
+  <circle cx="21" cy="40" r="1.5" fill="#0984e3"/>
+  <circle cx="30" cy="40" r="1.5" fill="#0984e3"/>
+  <circle cx="39" cy="40" r="1.5" fill="#0984e3"/>
+  <circle cx="48" cy="40" r="1.5" fill="#0984e3"/>
+  <circle cx="57" cy="40" r="1.5" fill="#0984e3"/>
+  <!-- Power/status panel -->
+  <rect x="64" y="9" width="8" height="14" rx="1" fill="#1e272e" stroke="#4a6572" stroke-width="0.5"/>
+  <circle cx="68" cy="13" r="1.5" fill="#00b894"/>
+  <circle cx="68" cy="19" r="1.5" fill="#0984e3"/>
+</svg>

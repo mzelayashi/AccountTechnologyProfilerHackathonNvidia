@@ -150,6 +150,75 @@ def redundancy_prompt(customer: str, product: str, question: str) -> str:
             f"changes. Be brief and flag what's new. If nothing recent is found, say so plainly.")
 
 
+def research_prompt_web(product: str, question: str, sources: str) -> str:
+    """Nemotron research agent, grounded on LIVE web SOURCES (DuckDuckGo). Falls back to model
+    knowledge (flagged) when the web is unreachable."""
+    if (sources or "").strip():
+        return (f"You are a product-research analyst. Using the live web SOURCES below, research "
+                f"**{product}** for an enterprise B2B buyer (context: {question}). Cover, factually: "
+                f"what it is and its current product line / latest models; deployment model (cloud / "
+                f"on-prem / hybrid) and dependencies; key strengths; limitations and risks; main "
+                f"competitors and how {product} compares; and which customer profiles it fits best vs "
+                f"poorly. Cite sources inline as [n]. Note the information is current as of today. Be "
+                f"concrete — no marketing filler.\n\n=== WEB SOURCES ===\n{sources[:6000]}")
+    return (f"You are a product-research analyst. Live web search was unavailable, so use your own "
+            f"knowledge and clearly note it may not reflect the very latest releases. Research "
+            f"**{product}** for an enterprise B2B buyer (context: {question}): what it is and its "
+            f"product line; deployment model and dependencies; strengths; limitations and risks; main "
+            f"competitors and how it compares; and the customer profiles it fits best vs poorly. Be "
+            f"concrete — no marketing filler.")
+
+
+def web_research_prompt(topic: str, sources: str) -> str:
+    """Standalone web-research brief (no customer) — the research agent run on its own when the user
+    asks to research/look up an external topic. Grounded on live web SOURCES, falls back to model
+    knowledge (flagged) when the web is unreachable."""
+    if (sources or "").strip():
+        return (f"You are a research analyst. Using ONLY the live web SOURCES below, write a clear, "
+                f"factual markdown brief on:\n\n**{topic}**\n\nCover the concrete specifics (what it is, "
+                f"the current/latest options or models, how they differ, notable changes, and practical "
+                f"considerations). Cite sources inline as [n]. Note the information is current as of "
+                f"today. No marketing filler.\n\n=== WEB SOURCES ===\n{sources[:6000]}")
+    return (f"You are a research analyst. Live web search was unavailable, so use your own knowledge and "
+            f"clearly note it may not reflect the very latest. Write a clear, factual markdown brief on: "
+            f"**{topic}**.")
+
+
+def synth_prompt_local(product: str, customer: str, question: str,
+                       research: str, saved: str) -> str:
+    """The synthesis ('third agent') for Nemotron — tightly capped to fit the 8K window with room for
+    a full 4-section verdict. No live-tenant section (no M365 on this engine)."""
+    return (f"{brain_rules.load_rules()}\n\n"
+            f"You advise an SHI Solutions Architect. Decide whether **{product}** is a good fit for "
+            f"**{customer}**, grounded FIRST in their saved data (Rule 1). Original ask: \"{question}\".\n\n"
+            f"=== PRODUCT RESEARCH (from live web): {product} ===\n{(research or '(none)')[:3500]}\n\n"
+            f"=== {customer} — FROM OUR SAVED TRIP REPORTS / PROFILE (PRIMARY) ===\n"
+            f"{(saved or '(none)')[:3500]}\n\n"
+            f"Write in markdown, specific to {customer}, citing their real technologies/sites by name:\n"
+            f"## Verdict\ngood fit / conditional fit / poor fit — decisive reasons tied to {customer}'s "
+            f"actual stack, sites, and constraints.\n"
+            f"## Where it fits\nconcrete opportunities in their environment.\n"
+            f"## Risks &amp; objections for {customer}\nand how to handle them.\n"
+            f"## Recommended next step\nwhat you'd do or propose next.\n\n"
+            f"Avoid generic filler. If the saved data is thin, say so plainly.")
+
+
+def verify_prompt(product: str, customer: str, verdict: str,
+                  research: str, saved: str) -> str:
+    """The self-check ('fourth agent'): the brain audits its own verdict against the evidence before
+    the receipt is finalized. Returns JSON the orchestrator parses with extract_json."""
+    return (f"You are a meticulous fact-checker auditing an analyst's verdict on whether **{product}** "
+            f"fits **{customer}**. Check each claim in the VERDICT against the EVIDENCE. Flag (a) any "
+            f"claim about {customer}'s environment/stack NOT supported by their saved data, and (b) any "
+            f"claim about {product} NOT supported by the research. Do not add new opinions.\n\n"
+            f"=== VERDICT UNDER REVIEW ===\n{(verdict or '')[:3500]}\n\n"
+            f"=== EVIDENCE: {customer} saved data ===\n{(saved or '(none)')[:2500]}\n\n"
+            f"=== EVIDENCE: {product} research ===\n{(research or '(none)')[:2500]}\n\n"
+            f"Reply with ONLY JSON: {{\"consistent\": true|false, \"confidence\": \"high\"|\"medium\""
+            f"|\"low\", \"issues\": [\"<unsupported or contradicted claim>\", ...], \"note\": \"<one-"
+            f"sentence overall assessment>\"}}")
+
+
 def synth_prompt(product: str, customer: str, question: str,
                  research: str, saved: str, live: str) -> str:
     return (f"{brain_rules.load_rules()}\n\n"

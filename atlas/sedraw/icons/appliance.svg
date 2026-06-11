@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 50">
+  <!-- Generic gray chassis -->
+  <rect x="4" y="8" width="72" height="34" rx="3" fill="#37474f" stroke="#546e7a" stroke-width="1.5"/>
+  <!-- Gear symbol (center) -->
+  <circle cx="40" cy="25" r="9" fill="#455a64" stroke="#78909c" stroke-width="1"/>
+  <circle cx="40" cy="25" r="4" fill="#37474f" stroke="#90a4ae" stroke-width="0.8"/>
+  <!-- Gear teeth -->
+  <rect x="38" y="14" width="4" height="4" rx="0.5" fill="#455a64" stroke="#78909c" stroke-width="0.5"/>
+  <rect x="38" y="32" width="4" height="4" rx="0.5" fill="#455a64" stroke="#78909c" stroke-width="0.5"/>
+  <rect x="29" y="23" width="4" height="4" rx="0.5" fill="#455a64" stroke="#78909c" stroke-width="0.5"/>
+  <rect x="47" y="23" width="4" height="4" rx="0.5" fill="#455a64" stroke="#78909c" stroke-width="0.5"/>
+  <rect x="31" y="16" width="3.5" height="3.5" rx="0.5" fill="#455a64" stroke="#78909c" stroke-width="0.5" transform="rotate(-45 32.75 17.75)"/>
+  <rect x="45.5" y="16" width="3.5" height="3.5" rx="0.5" fill="#455a64" stroke="#78909c" stroke-width="0.5" transform="rotate(45 47.25 17.75)"/>
+  <rect x="31" y="30.5" width="3.5" height="3.5" rx="0.5" fill="#455a64" stroke="#78909c" stroke-width="0.5" transform="rotate(45 32.75 32.25)"/>
+  <rect x="45.5" y="30.5" width="3.5" height="3.5" rx="0.5" fill="#455a64" stroke="#78909c" stroke-width="0.5" transform="rotate(-45 47.25 32.25)"/>
+  <!-- Ports (bottom) -->
+  <rect x="10" y="34" width="4" height="4" rx="0.5" fill="#1e272e" stroke="#4a6572" stroke-width="0.4"/>
+  <rect x="16" y="34" width="4" height="4" rx="0.5" fill="#1e272e" stroke="#4a6572" stroke-width="0.4"/>
+  <!-- Status LEDs -->
+  <circle cx="66" cy="14" r="1.5" fill="#00b894"/>
+  <circle cx="72" cy="14" r="1.5" fill="#0984e3"/>
+</svg>

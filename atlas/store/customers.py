@@ -15,7 +15,8 @@ from pathlib import Path
 import config
 from atlas.store import artifacts, vault
 
-SUBFOLDERS = ("artifacts", "account_technology_profile", "network_diagrams", "trip_reports")
+SUBFOLDERS = ("artifacts", "account_technology_profile", "network_diagrams", "trip_reports",
+              "network_input", "network_output", "vision_input", "vision_output")
 
 
 def customer_dir(name: str, create: bool = True) -> Path:
